@@ -7,7 +7,7 @@
 Custom Integration für [Home Assistant](https://www.home-assistant.io/), die den Netzwerkstatus von [OpenInfra](https://openinfra.tech) abfragt.
 
 Weitere Informationen zum Netzwerkstatus sind direkt auf der OpenInfra-Statusseite abrufbar:
-https://openinfra.tech/de/?postcode=15746
+https://openinfra.tech
 
 ## Funktionen
 
