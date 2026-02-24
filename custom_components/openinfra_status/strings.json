@@ -35,6 +35,9 @@
           "info": "Info"
         }
       },
+      "planned_work_title": {
+        "name": "Planned work title"
+      },
       "description": {
         "name": "Description"
       },

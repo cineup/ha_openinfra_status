@@ -44,6 +44,16 @@ def _get_planned_work_timerange(
     return f"{start} - {end}"
 
 
+def _get_title(
+    data: dict[str, Any], _coordinator: OpenInfraDataUpdateCoordinator
+) -> str | None:
+    """Extract title from planned work."""
+    planned = data.get("planned_work")
+    if planned:
+        return planned.get("title")
+    return None
+
+
 def _get_description(
     data: dict[str, Any], _coordinator: OpenInfraDataUpdateCoordinator
 ) -> str | None:
@@ -86,6 +96,11 @@ SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
         options=NETWORK_STATUS_OPTIONS,
         value_fn=lambda data, _coord: data.get("network_status"),
         extra_attrs_fn=_get_network_status_attrs,
+    ),
+    OpenInfraSensorEntityDescription(
+        key="planned_work_title",
+        translation_key="planned_work_title",
+        value_fn=_get_title,
     ),
     OpenInfraSensorEntityDescription(
         key="description",
