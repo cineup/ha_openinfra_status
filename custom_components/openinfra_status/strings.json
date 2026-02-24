@@ -26,7 +26,14 @@
   "entity": {
     "sensor": {
       "network_status": {
-        "name": "Network status"
+        "name": "Network status",
+        "state": {
+          "operational": "Operational",
+          "down": "Down",
+          "scheduled_maintenance": "Scheduled maintenance",
+          "recently_resolved": "Recently resolved",
+          "info": "Info"
+        }
       },
       "description": {
         "name": "Description"
