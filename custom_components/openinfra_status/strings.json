@@ -1,0 +1,45 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "OpenInfra Status",
+        "description": "Set up OpenInfra network status monitoring for your location.",
+        "data": {
+          "country": "Country code",
+          "postcode": "Postal code"
+        },
+        "data_description": {
+          "country": "Two-letter country code (e.g. de)",
+          "postcode": "Your postal code to check network status"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the OpenInfra API",
+      "invalid_response": "The API returned an invalid response for the given location",
+      "unknown": "An unexpected error occurred"
+    },
+    "abort": {
+      "already_configured": "This location is already configured"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "network_status": {
+        "name": "Network status"
+      },
+      "description": {
+        "name": "Description"
+      },
+      "last_update": {
+        "name": "Last update"
+      },
+      "disruption_since": {
+        "name": "Disruption since"
+      },
+      "planned_work": {
+        "name": "Planned work"
+      }
+    }
+  }
+}

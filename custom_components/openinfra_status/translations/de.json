@@ -1,0 +1,45 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "OpenInfra Status",
+        "description": "Richte die OpenInfra-Netzwerkstatus\u00fcberwachung f\u00fcr deinen Standort ein.",
+        "data": {
+          "country": "L\u00e4ndercode",
+          "postcode": "Postleitzahl"
+        },
+        "data_description": {
+          "country": "Zweistelliger L\u00e4ndercode (z.B. de)",
+          "postcode": "Deine Postleitzahl zur Abfrage des Netzwerkstatus"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zur OpenInfra-API nicht m\u00f6glich",
+      "invalid_response": "Die API hat eine ung\u00fcltige Antwort f\u00fcr den angegebenen Standort zur\u00fcckgegeben",
+      "unknown": "Ein unerwarteter Fehler ist aufgetreten"
+    },
+    "abort": {
+      "already_configured": "Dieser Standort ist bereits konfiguriert"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "network_status": {
+        "name": "Netzwerkstatus"
+      },
+      "description": {
+        "name": "Beschreibung"
+      },
+      "last_update": {
+        "name": "Letztes Update"
+      },
+      "disruption_since": {
+        "name": "St\u00f6rung seit"
+      },
+      "planned_work": {
+        "name": "Geplante Wartung"
+      }
+    }
+  }
+}
