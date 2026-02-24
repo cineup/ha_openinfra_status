@@ -30,53 +30,44 @@ class OpenInfraSensorEntityDescription(SensorEntityDescription):
     extra_attrs_fn: Callable[[dict[str, Any]], dict[str, Any]] | None = None
 
 
-def _get_planned_work_timerange(
-    data: dict[str, Any], _coordinator: OpenInfraDataUpdateCoordinator
-) -> str | None:
-    """Extract planned work time range as a readable string."""
-    planned = data.get("planned_work")
-    if not planned:
-        return None
-    start = planned.get("start_time", "")
-    end = planned.get("end_time", "")
-    if not start or not end:
-        return None
-    return f"{start} - {end}"
+def _get_network_status_attrs(data: dict[str, Any]) -> dict[str, Any]:
+    """Return extra attributes for the network status sensor."""
+    return {
+        "is_down": data.get("is_down"),
+        "is_planned_work": data.get("is_planned_work"),
+        "country_code": data.get("country_code"),
+        "detected_region": data.get("detected_region"),
+    }
 
 
-def _get_title(
+def _get_planned_work_title(
     data: dict[str, Any], _coordinator: OpenInfraDataUpdateCoordinator
 ) -> str | None:
-    """Extract title from planned work."""
+    """Extract title from planned work as the sensor state."""
     planned = data.get("planned_work")
     if planned:
         return planned.get("title")
     return None
 
 
-def _get_description(
-    data: dict[str, Any], _coordinator: OpenInfraDataUpdateCoordinator
-) -> str | None:
-    """Extract description text from planned work."""
+def _get_planned_work_attrs(data: dict[str, Any]) -> dict[str, Any]:
+    """Return all planned work fields as attributes."""
     planned = data.get("planned_work")
-    if planned:
-        return planned.get("description")
-    return None
-
-
-def _get_network_status_attrs(data: dict[str, Any]) -> dict[str, Any]:
-    """Return extra attributes for the network status sensor."""
+    if not planned:
+        return {}
+    # Include all known fields; any additional API fields are passed through
+    known_keys = {"title"}
     attrs: dict[str, Any] = {
-        "is_down": data.get("is_down"),
-        "is_planned_work": data.get("is_planned_work"),
-        "country_code": data.get("country_code"),
-        "detected_region": data.get("detected_region"),
-        "planned_work_status": data.get("planned_work_status"),
+        "description": planned.get("description"),
+        "start_time": planned.get("start_time"),
+        "end_time": planned.get("end_time"),
+        "id": planned.get("id"),
+        "status": data.get("planned_work_status"),
     }
-    planned = data.get("planned_work")
-    if planned:
-        attrs["planned_work_title"] = planned.get("title")
-        attrs["planned_work_id"] = planned.get("id")
+    # Pass through any extra fields the API may add in the future
+    for key, value in planned.items():
+        if key not in known_keys and key not in attrs:
+            attrs[key] = value
     return attrs
 
 
@@ -98,14 +89,10 @@ SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
         extra_attrs_fn=_get_network_status_attrs,
     ),
     OpenInfraSensorEntityDescription(
-        key="planned_work_title",
-        translation_key="planned_work_title",
-        value_fn=_get_title,
-    ),
-    OpenInfraSensorEntityDescription(
-        key="description",
-        translation_key="description",
-        value_fn=_get_description,
+        key="planned_work",
+        translation_key="planned_work",
+        value_fn=_get_planned_work_title,
+        extra_attrs_fn=_get_planned_work_attrs,
     ),
     OpenInfraSensorEntityDescription(
         key="last_update",
@@ -118,11 +105,6 @@ SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
         translation_key="disruption_since",
         device_class=SensorDeviceClass.TIMESTAMP,
         value_fn=lambda _data, coord: coord.disruption_since,
-    ),
-    OpenInfraSensorEntityDescription(
-        key="planned_work",
-        translation_key="planned_work",
-        value_fn=_get_planned_work_timerange,
     ),
 )
 

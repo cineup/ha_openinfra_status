@@ -76,6 +76,8 @@ class OpenInfraDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 f"API returned error: {data.get('error', 'unknown error')}"
             )
 
+        _LOGGER.debug("OpenInfra API response: %s", data)
+
         # Track disruption start time
         is_down = data.get("is_down", False)
         if is_down and self._disruption_since is None:

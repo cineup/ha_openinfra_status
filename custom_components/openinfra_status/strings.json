@@ -35,20 +35,14 @@
           "info": "Info"
         }
       },
-      "planned_work_title": {
-        "name": "Planned work title"
-      },
-      "description": {
-        "name": "Description"
+      "planned_work": {
+        "name": "Planned work"
       },
       "last_update": {
         "name": "Last update"
       },
       "disruption_since": {
         "name": "Disruption since"
-      },
-      "planned_work": {
-        "name": "Planned work"
       }
     }
   }

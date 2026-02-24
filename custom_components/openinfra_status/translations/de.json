@@ -35,20 +35,14 @@
           "info": "Information"
         }
       },
-      "planned_work_title": {
-        "name": "Wartungstitel"
-      },
-      "description": {
-        "name": "Beschreibung"
+      "planned_work": {
+        "name": "Geplante Wartung"
       },
       "last_update": {
         "name": "Letztes Update"
       },
       "disruption_since": {
         "name": "St\u00f6rung seit"
-      },
-      "planned_work": {
-        "name": "Geplante Wartung"
       }
     }
   }
