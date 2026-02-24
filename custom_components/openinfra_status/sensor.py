@@ -30,44 +30,49 @@ class OpenInfraSensorEntityDescription(SensorEntityDescription):
     extra_attrs_fn: Callable[[dict[str, Any]], dict[str, Any]] | None = None
 
 
+def _get_event_title(data: dict[str, Any], key: str) -> str | None:
+    """Extract title from an event object (planned_work, error, is_down)."""
+    event = data.get(key)
+    if isinstance(event, dict):
+        return event.get("title")
+    return None
+
+
+def _get_event_attrs(data: dict[str, Any], key: str) -> dict[str, Any]:
+    """Extract all attributes from an event object.
+
+    Handles both boolean and dict responses from the API.
+    Known fields are mapped explicitly; unknown fields are passed through.
+    """
+    event = data.get(key)
+    if not isinstance(event, dict):
+        return {}
+    known_keys = {"title"}
+    attrs: dict[str, Any] = {}
+    for field in ("description", "id", "start_time", "end_time"):
+        if field in event:
+            attrs[field] = event[field]
+    # Pass through any extra fields the API may add
+    for field, value in event.items():
+        if field not in known_keys and field not in attrs:
+            attrs[field] = value
+    return attrs
+
+
 def _get_network_status_attrs(data: dict[str, Any]) -> dict[str, Any]:
     """Return extra attributes for the network status sensor."""
     return {
-        "is_down": data.get("is_down"),
-        "is_planned_work": data.get("is_planned_work"),
         "country_code": data.get("country_code"),
         "detected_region": data.get("detected_region"),
     }
 
 
-def _get_planned_work_title(
-    data: dict[str, Any], _coordinator: OpenInfraDataUpdateCoordinator
-) -> str | None:
-    """Extract title from planned work as the sensor state."""
-    planned = data.get("planned_work")
-    if planned:
-        return planned.get("title")
-    return None
-
-
 def _get_planned_work_attrs(data: dict[str, Any]) -> dict[str, Any]:
-    """Return all planned work fields as attributes."""
-    planned = data.get("planned_work")
-    if not planned:
-        return {}
-    # Include all known fields; any additional API fields are passed through
-    known_keys = {"title"}
-    attrs: dict[str, Any] = {
-        "description": planned.get("description"),
-        "start_time": planned.get("start_time"),
-        "end_time": planned.get("end_time"),
-        "id": planned.get("id"),
-        "status": data.get("planned_work_status"),
-    }
-    # Pass through any extra fields the API may add in the future
-    for key, value in planned.items():
-        if key not in known_keys and key not in attrs:
-            attrs[key] = value
+    """Return planned work attributes including top-level status."""
+    attrs = _get_event_attrs(data, "planned_work")
+    status = data.get("planned_work_status")
+    if status is not None:
+        attrs["status"] = status
     return attrs
 
 
@@ -91,8 +96,20 @@ SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
     OpenInfraSensorEntityDescription(
         key="planned_work",
         translation_key="planned_work",
-        value_fn=_get_planned_work_title,
+        value_fn=lambda data, _coord: _get_event_title(data, "planned_work"),
         extra_attrs_fn=_get_planned_work_attrs,
+    ),
+    OpenInfraSensorEntityDescription(
+        key="error",
+        translation_key="error",
+        value_fn=lambda data, _coord: _get_event_title(data, "error"),
+        extra_attrs_fn=lambda data: _get_event_attrs(data, "error"),
+    ),
+    OpenInfraSensorEntityDescription(
+        key="disruption",
+        translation_key="disruption",
+        value_fn=lambda data, _coord: _get_event_title(data, "is_down"),
+        extra_attrs_fn=lambda data: _get_event_attrs(data, "is_down"),
     ),
     OpenInfraSensorEntityDescription(
         key="last_update",

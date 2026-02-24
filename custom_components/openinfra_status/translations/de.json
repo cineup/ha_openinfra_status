@@ -38,6 +38,12 @@
       "planned_work": {
         "name": "Geplante Wartung"
       },
+      "error": {
+        "name": "Fehler"
+      },
+      "disruption": {
+        "name": "St\u00f6rung"
+      },
       "last_update": {
         "name": "Letztes Update"
       },

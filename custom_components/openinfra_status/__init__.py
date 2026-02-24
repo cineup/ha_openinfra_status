@@ -78,7 +78,7 @@ class OpenInfraDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         _LOGGER.debug("OpenInfra API response: %s", data)
 
-        # Track disruption start time
+        # Track disruption start time (is_down can be bool or dict)
         is_down = data.get("is_down", False)
         if is_down and self._disruption_since is None:
             self._disruption_since = datetime.now().astimezone()

@@ -13,9 +13,11 @@ https://openinfra.tech
 
 - Abfrage des aktuellen Netzwerkstatus für einen Standort (Land + Postleitzahl)
 - Automatische Aktualisierung alle 10 Minuten
-- 4 Sensor-Entities:
-  - **Netzwerkstatus** – Enum-Sensor (`operational`, `down`, `scheduled_maintenance`, `recently_resolved`, `info`) mit Attributen: `is_down`, `is_planned_work`, `country_code`, `detected_region`
-  - **Geplante Wartung** – Titel der Wartung als State, mit Attributen: `description`, `start_time`, `end_time`, `id`, `status`
+- 6 Sensor-Entities:
+  - **Netzwerkstatus** – Enum-Sensor (`operational`, `down`, `scheduled_maintenance`, `recently_resolved`, `info`) mit Attributen: `country_code`, `detected_region`
+  - **Geplante Wartung** – Titel als State, mit Attributen: `description`, `start_time`, `end_time`, `id`, `starts_in_days`, `status`
+  - **Fehler** – Titel als State, mit Attributen: `description`, `id`, `start_time` (wenn die API ein Fehler-Objekt liefert)
+  - **Störung** – Titel als State, mit Attributen: `description`, `id`, `start_time` (wenn die API ein Störungs-Objekt liefert)
   - **Letztes Update** – Zeitstempel der letzten API-Abfrage
   - **Störung seit** – Zeitstempel seit wann eine Störung besteht
 

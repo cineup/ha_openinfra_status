@@ -38,6 +38,12 @@
       "planned_work": {
         "name": "Planned work"
       },
+      "error": {
+        "name": "Error"
+      },
+      "disruption": {
+        "name": "Disruption"
+      },
       "last_update": {
         "name": "Last update"
       },
