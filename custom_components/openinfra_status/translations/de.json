@@ -5,11 +5,11 @@
         "title": "OpenInfra Status",
         "description": "Richte die OpenInfra-Netzwerkstatus\u00fcberwachung f\u00fcr deinen Standort ein.",
         "data": {
-          "country": "L\u00e4ndercode",
+          "country": "Land",
           "postcode": "Postleitzahl"
         },
         "data_description": {
-          "country": "Zweistelliger L\u00e4ndercode (z.B. de)",
+          "country": "W\u00e4hle dein Land",
           "postcode": "Deine Postleitzahl zur Abfrage des Netzwerkstatus"
         }
       }

@@ -2,59 +2,61 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 
-> **Hinweis:** Diese Integration befindet sich noch in aktiver Entwicklung. Funktionen können sich ändern oder erweitert werden.
+> **Note:** This integration is under active development. Features may change or be extended.
 
-Custom Integration für [Home Assistant](https://www.home-assistant.io/), die den Netzwerkstatus von [OpenInfra](https://openinfra.tech) abfragt.
+Custom integration for [Home Assistant](https://www.home-assistant.io/) that monitors the network status of [OpenInfra](https://openinfra.tech).
 
-Weitere Informationen zum Netzwerkstatus sind direkt auf der OpenInfra-Statusseite abrufbar:
+For more information about network status, visit the OpenInfra status page:
 https://openinfra.tech
 
-## Funktionen
+## Features
 
-- Abfrage des aktuellen Netzwerkstatus für einen Standort (Land + Postleitzahl)
-- Automatische Aktualisierung alle 10 Minuten
-- 6 Sensor-Entities:
-  - **Netzwerkstatus** – Enum-Sensor (`operational`, `down`, `scheduled_maintenance`, `recently_resolved`, `info`) mit Attributen: `country_code`, `detected_region`
-  - **Geplante Wartung** – Titel als State, mit Attributen: `description`, `start_time`, `end_time`, `id`, `starts_in_days`, `status`
-  - **Fehler** – Titel als State, mit Attributen: `description`, `id`, `start_time` (wenn die API ein Fehler-Objekt liefert)
-  - **Störung** – Titel als State, mit Attributen: `description`, `id`, `start_time` (wenn die API ein Störungs-Objekt liefert)
-  - **Letztes Update** – Zeitstempel der letzten API-Abfrage
-  - **Störung seit** – Zeitstempel seit wann eine Störung besteht
+- Query current network status for a location (country + postal code)
+- Automatic updates every 10 minutes
+- 6 sensor entities:
+  - **Network status** – Enum sensor (`operational`, `down`, `scheduled_maintenance`, `recently_resolved`, `info`) with attributes: `country_code`, `detected_region`
+  - **Planned work** – Title as state, with attributes: `description`, `start_time`, `end_time`, `id`, `starts_in_days`, `status`
+  - **Error** – Title as state, with attributes: `description`, `id`, `start_time` (when the API returns an error object)
+  - **Disruption** – Title as state, with attributes: `description`, `id`, `start_time` (when the API returns a disruption object)
+  - **Last update** – Timestamp of the last API call
+  - **Disruption since** – Timestamp since when a disruption has been active
 
-## Unterstützte Länder
+## Supported Countries
 
-| Code | Land |
-|------|------|
-| `de` | Deutschland |
-| `se` | Schweden |
+| Code | Country |
+|------|---------|
+| `de` | Germany |
+| `se` | Sweden |
+| `uk` | United Kingdom |
+| `us` | United States |
 
 ## Installation
 
-### Über HACS (empfohlen)
+### Via HACS (recommended)
 
-1. [HACS](https://hacs.xyz/) in Home Assistant installieren (falls noch nicht vorhanden)
-2. In HACS: **Integrationen** → Menü (drei Punkte oben rechts) → **Benutzerdefinierte Repositories**
-3. Repository-URL `https://github.com/cineup/ha_openinfra_status` eingeben, Kategorie **Integration** wählen
-4. "OpenInfra Status" installieren
-5. **Home Assistant neu starten**
-6. Einstellungen → Geräte & Dienste → **Integration hinzufügen** → "OpenInfra Status"
-7. Ländercode (z.B. `de`) und Postleitzahl eingeben
+1. Install [HACS](https://hacs.xyz/) in Home Assistant (if not already installed)
+2. In HACS: **Integrations** → Menu (three dots top right) → **Custom repositories**
+3. Enter repository URL `https://github.com/cineup/ha_openinfra_status`, select category **Integration**
+4. Install "OpenInfra Status"
+5. **Restart Home Assistant**
+6. Settings → Devices & Services → **Add Integration** → "OpenInfra Status"
+7. Select your country and enter your postal code
 
-### Manuell
+### Manual
 
-1. Den Ordner `custom_components/openinfra_status` in dein Home Assistant `config/custom_components/` Verzeichnis kopieren
-2. Home Assistant neu starten
-3. Integration wie oben beschrieben einrichten
+1. Copy the `custom_components/openinfra_status` folder into your Home Assistant `config/custom_components/` directory
+2. Restart Home Assistant
+3. Set up the integration as described above
 
-## Konfiguration
+## Configuration
 
-Bei der Einrichtung werden zwei Angaben benötigt:
+Two inputs are required during setup:
 
-- **Ländercode** – Zweistelliger Code (`de` oder `se`)
-- **Postleitzahl** – Deine Postleitzahl zur Abfrage des lokalen Netzwerkstatus
+- **Country** – Select from the supported countries (de, se, uk, us)
+- **Postal code** – Your postal code to check local network status
 
-## Entwicklung
+## Development
 
-Diese Integration ist ein Community-Projekt und steht in keiner offiziellen Verbindung zu OpenInfra.
+This integration is a community project and has no official affiliation with OpenInfra.
 
-Fehler und Verbesserungsvorschläge gerne als [Issue](https://github.com/cineup/ha_openinfra_status/issues) melden.
+Bug reports and feature requests are welcome as [Issues](https://github.com/cineup/ha_openinfra_status/issues).

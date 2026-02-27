@@ -16,9 +16,11 @@ from .const import API_TIMEOUT, API_URL, CONF_COUNTRY, CONF_POSTCODE, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+SUPPORTED_COUNTRIES = ["de", "se", "uk", "us"]
+
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_COUNTRY, default="de"): str,
+        vol.Required(CONF_COUNTRY, default="de"): vol.In(SUPPORTED_COUNTRIES),
         vol.Required(CONF_POSTCODE): str,
     }
 )
