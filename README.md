@@ -26,6 +26,7 @@ https://openinfra.tech
 | Code | Country |
 |------|---------|
 | `de` | Germany |
+| `no` | Norway |
 | `se` | Sweden |
 | `uk` | United Kingdom |
 | `us` | United States |
@@ -52,7 +53,7 @@ https://openinfra.tech
 
 Two inputs are required during setup:
 
-- **Country** – Select from the supported countries (de, se, uk, us)
+- **Country** – Select from the supported countries (de, no, se, uk, us)
 - **Postal code** – Your postal code to check local network status
 
 ## Development

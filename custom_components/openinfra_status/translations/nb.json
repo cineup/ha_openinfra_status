@@ -1,0 +1,55 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "OpenInfra Status",
+        "description": "Konfigurer overv\u00e5king av OpenInfra nettverksstatus for din plassering.",
+        "data": {
+          "country": "Land",
+          "postcode": "Postnummer"
+        },
+        "data_description": {
+          "country": "Velg ditt land",
+          "postcode": "Ditt postnummer for \u00e5 sjekke nettverksstatus"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kunne ikke koble til OpenInfra API",
+      "invalid_response": "API-et returnerte et ugyldig svar for den angitte plasseringen",
+      "unknown": "En uventet feil oppstod"
+    },
+    "abort": {
+      "already_configured": "Denne plasseringen er allerede konfigurert"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "network_status": {
+        "name": "Nettverksstatus",
+        "state": {
+          "operational": "I drift",
+          "down": "Driftsforstyrrelse",
+          "scheduled_maintenance": "Planlagt vedlikehold",
+          "recently_resolved": "Nylig l\u00f8st",
+          "info": "Informasjon"
+        }
+      },
+      "planned_work": {
+        "name": "Planlagt vedlikehold"
+      },
+      "error": {
+        "name": "Feil"
+      },
+      "disruption": {
+        "name": "Driftsforstyrrelse"
+      },
+      "last_update": {
+        "name": "Siste oppdatering"
+      },
+      "disruption_since": {
+        "name": "Driftsforstyrrelse siden"
+      }
+    }
+  }
+}

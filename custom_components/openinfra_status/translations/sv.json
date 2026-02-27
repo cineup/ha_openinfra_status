@@ -1,0 +1,55 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "OpenInfra Status",
+        "description": "Konfigurera \u00f6vervakning av OpenInfra n\u00e4tverksstatus f\u00f6r din plats.",
+        "data": {
+          "country": "Land",
+          "postcode": "Postnummer"
+        },
+        "data_description": {
+          "country": "V\u00e4lj ditt land",
+          "postcode": "Ditt postnummer f\u00f6r att kontrollera n\u00e4tverksstatus"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kunde inte ansluta till OpenInfra API",
+      "invalid_response": "API:et returnerade ett ogiltigt svar f\u00f6r den angivna platsen",
+      "unknown": "Ett ov\u00e4ntat fel intr\u00e4ffade"
+    },
+    "abort": {
+      "already_configured": "Denna plats \u00e4r redan konfigurerad"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "network_status": {
+        "name": "N\u00e4tverksstatus",
+        "state": {
+          "operational": "I drift",
+          "down": "Driftsst\u00f6rning",
+          "scheduled_maintenance": "Planerat underh\u00e5ll",
+          "recently_resolved": "Nyligen \u00e5tg\u00e4rdat",
+          "info": "Information"
+        }
+      },
+      "planned_work": {
+        "name": "Planerat underh\u00e5ll"
+      },
+      "error": {
+        "name": "Fel"
+      },
+      "disruption": {
+        "name": "Driftsst\u00f6rning"
+      },
+      "last_update": {
+        "name": "Senaste uppdatering"
+      },
+      "disruption_since": {
+        "name": "Driftsst\u00f6rning sedan"
+      }
+    }
+  }
+}
