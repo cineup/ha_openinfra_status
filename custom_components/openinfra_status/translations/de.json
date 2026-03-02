@@ -26,12 +26,7 @@
   "entity": {
     "sensor": {
       "network_status": {
-        "name": "Netzwerkstatus",
-        "state": {
-          "up": "Betriebsbereit",
-          "down": "Gestört",
-          "maintenance": "Wartung"
-        }
+        "name": "Netzwerkstatus"
       },
       "planned_work": {
         "name": "Geplante Wartung"

@@ -26,12 +26,7 @@
   "entity": {
     "sensor": {
       "network_status": {
-        "name": "Nettverksstatus",
-        "state": {
-          "up": "I drift",
-          "down": "Driftsforstyrrelse",
-          "maintenance": "Vedlikehold"
-        }
+        "name": "Nettverksstatus"
       },
       "planned_work": {
         "name": "Planlagt vedlikehold"
