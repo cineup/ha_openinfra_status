@@ -76,18 +76,10 @@ def _get_planned_work_attrs(data: dict[str, Any]) -> dict[str, Any]:
     return attrs
 
 
-NETWORK_STATUS_OPTIONS = [
-    "up",
-    "down",
-    "maintenance",
-]
-
 SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
     OpenInfraSensorEntityDescription(
         key="network_status",
         translation_key="network_status",
-        device_class=SensorDeviceClass.ENUM,
-        options=NETWORK_STATUS_OPTIONS,
         value_fn=lambda data, _coord: data.get("network_status"),
         extra_attrs_fn=_get_network_status_attrs,
     ),

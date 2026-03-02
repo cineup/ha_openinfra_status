@@ -26,12 +26,7 @@
   "entity": {
     "sensor": {
       "network_status": {
-        "name": "Network status",
-        "state": {
-          "up": "Operational",
-          "down": "Down",
-          "maintenance": "Maintenance"
-        }
+        "name": "Network status"
       },
       "planned_work": {
         "name": "Planned work"
