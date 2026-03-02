@@ -28,11 +28,9 @@
       "network_status": {
         "name": "N\u00e4tverksstatus",
         "state": {
-          "operational": "I drift",
+          "up": "I drift",
           "down": "Driftsst\u00f6rning",
-          "scheduled_maintenance": "Planerat underh\u00e5ll",
-          "recently_resolved": "Nyligen \u00e5tg\u00e4rdat",
-          "info": "Information"
+          "maintenance": "Underh\u00e5ll"
         }
       },
       "planned_work": {

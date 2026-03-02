@@ -28,11 +28,9 @@
       "network_status": {
         "name": "Nettverksstatus",
         "state": {
-          "operational": "I drift",
+          "up": "I drift",
           "down": "Driftsforstyrrelse",
-          "scheduled_maintenance": "Planlagt vedlikehold",
-          "recently_resolved": "Nylig l\u00f8st",
-          "info": "Informasjon"
+          "maintenance": "Vedlikehold"
         }
       },
       "planned_work": {

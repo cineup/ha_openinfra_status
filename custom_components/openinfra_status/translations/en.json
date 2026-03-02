@@ -28,11 +28,9 @@
       "network_status": {
         "name": "Network status",
         "state": {
-          "operational": "Operational",
+          "up": "Operational",
           "down": "Down",
-          "scheduled_maintenance": "Scheduled maintenance",
-          "recently_resolved": "Recently resolved",
-          "info": "Info"
+          "maintenance": "Maintenance"
         }
       },
       "planned_work": {

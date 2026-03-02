@@ -77,11 +77,9 @@ def _get_planned_work_attrs(data: dict[str, Any]) -> dict[str, Any]:
 
 
 NETWORK_STATUS_OPTIONS = [
-    "operational",
+    "up",
     "down",
-    "scheduled_maintenance",
-    "recently_resolved",
-    "info",
+    "maintenance",
 ]
 
 SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (

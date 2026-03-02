@@ -28,11 +28,9 @@
       "network_status": {
         "name": "Netzwerkstatus",
         "state": {
-          "operational": "Betriebsbereit",
+          "up": "Betriebsbereit",
           "down": "Gestört",
-          "scheduled_maintenance": "Geplante Wartung",
-          "recently_resolved": "Kürzlich behoben",
-          "info": "Information"
+          "maintenance": "Wartung"
         }
       },
       "planned_work": {
