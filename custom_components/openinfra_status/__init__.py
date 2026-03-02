@@ -28,6 +28,16 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
+# Map raw API network_status values to our sensor ENUM options.
+_STATUS_MAP: dict[str, str] = {
+    "up": "operational",
+    "operational": "operational",
+    "down": "down",
+    "scheduled_maintenance": "scheduled_maintenance",
+    "recently_resolved": "recently_resolved",
+    "info": "info",
+}
+
 OpenInfraConfigEntry: TypeAlias = ConfigEntry
 
 
@@ -77,6 +87,10 @@ class OpenInfraDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
 
         _LOGGER.debug("OpenInfra API response: %s", data)
+
+        # Normalise network_status from API (e.g. "up" → "operational")
+        raw_status = data.get("network_status", "")
+        data["network_status"] = _STATUS_MAP.get(raw_status, raw_status)
 
         # Track disruption start time (is_down can be bool or dict)
         is_down = data.get("is_down", False)
