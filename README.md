@@ -14,7 +14,7 @@ https://openinfra.tech
 - Query current network status for a location (country + postal code)
 - Automatic updates every 10 minutes
 - 6 sensor entities:
-  - **Network status** – Enum sensor (`operational`, `down`, `scheduled_maintenance`, `recently_resolved`, `info`) with attributes: `country_code`, `detected_region`
+  - **Network status** – Text sensor showing the raw API status value (e.g. `up`, `down`, `maintenance`) with attributes: `country_code`, `detected_region`
   - **Planned work** – Title as state, with attributes: `description`, `start_time`, `end_time`, `id`, `starts_in_days`, `status`
   - **Error** – Title as state, with attributes: `description`, `id`, `start_time` (when the API returns an error object)
   - **Disruption** – Title as state, with attributes: `description`, `id`, `start_time` (when the API returns a disruption object)
