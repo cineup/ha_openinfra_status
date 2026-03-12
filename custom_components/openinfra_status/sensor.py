@@ -39,11 +39,21 @@ def _get_event_field(data: dict[str, Any], key: str, field: str) -> str | None:
 
 
 def _parse_iso_timestamp(value: str | None) -> datetime | None:
-    """Parse an ISO 8601 timestamp string into a timezone-aware datetime."""
+    """Parse a timestamp string into a timezone-aware datetime.
+
+    The API uses format "YYYY-MM-DD HH:MM:SS" (no timezone).
+    Following the website JS behaviour, naive timestamps are treated as UTC.
+    """
     if not value:
         return None
     try:
-        return dt_util.parse_datetime(value)
+        parsed = dt_util.parse_datetime(value)
+        if parsed is None:
+            return None
+        # API timestamps lack timezone info; treat as UTC (matches website JS).
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=dt_util.UTC)
+        return parsed
     except (ValueError, TypeError):
         return None
 
@@ -77,13 +87,12 @@ def _get_latest_comment_timestamp(data: dict[str, Any]) -> datetime | None:
     return None
 
 
-def _get_general_info_summary(data: dict[str, Any]) -> str | None:
-    """Build a summary of general info items (from /api/general)."""
+def _get_general_info_count(data: dict[str, Any]) -> int | None:
+    """Return the number of active general info items (from /api/general)."""
     info_list = data.get("general_info")
-    if not isinstance(info_list, list) or not info_list:
+    if not isinstance(info_list, list):
         return None
-    titles = [item.get("title", "") for item in info_list if isinstance(item, dict)]
-    return "; ".join(t for t in titles if t) or None
+    return len(info_list)
 
 
 SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
@@ -210,11 +219,12 @@ SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
         value_fn=lambda data, _coord: data.get("resolved_within_hours"),
     ),
     # --- General info (from /api/general) ---
+    # CONFIRMED: info items have id, title, message, type, start_time, end_time.
     OpenInfraSensorEntityDescription(
         key="general_info",
         translation_key="general_info",
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data, _coord: _get_general_info_summary(data),
+        value_fn=lambda data, _coord: _get_general_info_count(data),
     ),
     # --- Timestamp sensors ---
     # LOCAL: generated client-side, not from API.
@@ -270,10 +280,33 @@ class OpenInfraSensorEntity(
         )
 
     @property
-    def native_value(self) -> datetime | str | None:
+    def native_value(self) -> datetime | str | int | None:
         """Return the state of the sensor."""
         if self.coordinator.data is None:
             return None
         return self.entity_description.value_fn(
             self.coordinator.data, self.coordinator
         )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return additional state attributes."""
+        if self.entity_description.key != "general_info":
+            return None
+        if self.coordinator.data is None:
+            return None
+        info_list = self.coordinator.data.get("general_info")
+        if not isinstance(info_list, list) or not info_list:
+            return None
+        attrs: dict[str, Any] = {}
+        for i, item in enumerate(info_list):
+            if not isinstance(item, dict):
+                continue
+            prefix = f"item_{i}"
+            attrs[f"{prefix}_id"] = item.get("id")
+            attrs[f"{prefix}_title"] = item.get("title")
+            attrs[f"{prefix}_message"] = item.get("message")
+            attrs[f"{prefix}_type"] = item.get("type")
+            attrs[f"{prefix}_start_time"] = item.get("start_time")
+            attrs[f"{prefix}_end_time"] = item.get("end_time")
+        return attrs

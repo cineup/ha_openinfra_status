@@ -75,18 +75,28 @@ DEFAULT_SCAN_INTERVAL_MINUTES = 10
 #
 # ---- /api/general endpoint ------------------------------------------------
 #
-# JS-CONFIRMED fields:
+# CONFIRMED fields (observed 2026-03-12, country=de):
 #
 #   Field             Type      Example             Notes
 #   ─────────────────────────────────────────────────────────────────────
+#   success           bool      true                Valid response
+#   error             bool      false               Boolean error flag
 #   has_info          bool      true                Whether info items exist
+#   country_code      string    "DE"                Uppercase country code
 #   info              array                         Array of info items:
+#     .id             int       44                    Unique item ID
 #     .title          string                          Item title
 #     .message        string                          Item message (may have \n)
 #     .type           string    "warning"|"maintenance"|"success"|"info"
+#     .start_time     string    "2026-03-09 19:56:35" Timestamp (no TZ, treat as UTC)
+#     .end_time       string|null                     Nullable end timestamp
+#
+# NOTE: Timestamps use format "YYYY-MM-DD HH:MM:SS" (space separator, no
+# timezone). The website JS treats these as UTC by appending "Z".
+# Items with end_time=null may still be resolved (check message text).
 #
 # ---- Fields NOT used by this integration ----------------------------------
-#   request_url, response_code, postal_code
+#   request_url, response_code, postal_code (URL-encoded echo)
 #
 # ---- CORRECTED assumptions (previously speculated, now disproven) ----------
 #   - "error" does NOT become a dict; error text is in "error_message"
