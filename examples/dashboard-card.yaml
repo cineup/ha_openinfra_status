@@ -1,0 +1,139 @@
+# OpenInfra Status — Dashboard Card (Mushroom)
+#
+# Requires: custom:mushroom-template-card, custom:vertical-stack-in-card
+#
+# Entity-IDs are based on a German HA installation with postcode 15746.
+# Adjust the entity IDs to match your setup:
+#   - Replace "15746" with your postcode
+#   - Check actual entity IDs in Settings → Devices → OpenInfra
+
+type: custom:vertical-stack-in-card
+cards:
+  # ── Main status card ──────────────────────────────────────────────
+  - type: custom:mushroom-template-card
+    entity: sensor.openinfra_15746_netzwerkstatus
+    primary: |
+      {% set s = states(entity) %}
+      {% if s == 'down' %}Netzwerkstörung
+      {% elif s == 'maintenance' %}Geplante Wartung
+      {% elif s == 'disruption' %}Netzwerkstörung
+      {% elif s == 'up' %}OpenInfra OK
+      {% else %}Unbekannt{% endif %}
+    secondary: |
+      {% set s = states(entity) %}
+      {% set resolved = is_state('binary_sensor.openinfra_15746_kurzlich_behoben', 'on') %}
+      {% if s == 'down' %}
+        {% set seit = states('sensor.openinfra_15746_ausfall_beginn') %}
+        {% if seit not in ['unknown', 'unavailable'] %}
+          {% set start = as_datetime(seit) %}
+          {% set dauer = now() - start %}
+          {% set h = (dauer.total_seconds() // 3600) | int %}
+          {% set m = ((dauer.total_seconds() % 3600) // 60) | int %}
+          ⚡ {{ h }}:{{ '%02d' | format(m) }}h seit {{ start.strftime('%d.%m.%y %H:%M') }}
+        {% else %}
+          ⚡ Störung aktiv
+        {% endif %}
+        {% set kommentar = states('sensor.openinfra_15746_letzter_kommentar') %}
+        {% if kommentar not in ['unknown', 'unavailable', 'None'] %}
+          {{ kommentar[:120] }}
+        {% endif %}
+        {% set upd = states('sensor.openinfra_15746_letztes_update') %}
+        {% if upd not in ['unknown', 'unavailable'] %}
+          · Update {{ as_datetime(upd).astimezone(now().tzinfo).strftime('%H:%M') }}
+        {% endif %}
+      {% elif s == 'maintenance' %}
+        {% set titel = states('sensor.openinfra_15746_wartungstitel') %}
+        {% if titel not in ['unknown', 'unavailable', 'None'] %}
+          {{ titel }}
+        {% endif %}
+        {% set start = states('sensor.openinfra_15746_wartungsbeginn') %}
+        {% set end = states('sensor.openinfra_15746_wartungsende') %}
+        {% if start not in ['unknown', 'unavailable'] %}
+          {% set s_dt = as_datetime(start).astimezone(now().tzinfo) %}
+          · {{ s_dt.strftime('%d.%m.%y %H:%M') }}
+          {% if end not in ['unknown', 'unavailable'] %}
+            {% set e_dt = as_datetime(end).astimezone(now().tzinfo) %}
+            → {{ e_dt.strftime('%H:%M') }}
+          {% endif %}
+        {% endif %}
+      {% elif resolved %}
+        ✅ Störung wurde behoben
+        {% set resolved_at = states('sensor.openinfra_15746_ausfall_behoben_um') %}
+        {% if resolved_at not in ['unknown', 'unavailable'] %}
+          · {{ as_datetime(resolved_at).astimezone(now().tzinfo).strftime('%d.%m.%y %H:%M') }}
+        {% endif %}
+      {% elif s == 'up' %}
+        Keine Störungen in Ihrem Bereich gefunden.
+      {% endif %}
+    icon: |-
+      {% set s = states(entity) %}
+      {% if s == 'down' %}mdi:network-off
+      {% else %}mdi:network
+      {% endif %}
+    badge_icon: |-
+      {% set s = states(entity) %}
+      {% set resolved = is_state('binary_sensor.openinfra_15746_kurzlich_behoben', 'on') %}
+      {% if s == 'down' %}mdi:alert
+      {% elif s == 'up' and resolved %}mdi:check-circle
+      {% elif s == 'up' %}mdi:check-bold
+      {% elif s == 'maintenance' %}mdi:wrench-clock
+      {% endif %}
+    badge_color: |-
+      {% set s = states(entity) %}
+      {% set resolved = is_state('binary_sensor.openinfra_15746_kurzlich_behoben', 'on') %}
+      {% if s == 'down' %}red
+      {% elif s == 'maintenance' %}amber
+      {% elif resolved %}blue
+      {% else %}green
+      {% endif %}
+    multiline_secondary: true
+
+  # ── General info items (maintenance/info/warning) ─────────────────
+  # Shows all general info items from /api/general endpoint.
+  # These are country-wide notices, not specific to your postcode.
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.openinfra_15746_allgemeine_info
+        state: "on"
+    card:
+      type: custom:mushroom-template-card
+      entity: sensor.openinfra_15746_allgemeine_info
+      primary: |
+        {% set count = states(entity) | int(0) %}
+        {% if count == 1 %}1 allgemeine Meldung
+        {% else %}{{ count }} allgemeine Meldungen
+        {% endif %}
+      secondary: |
+        {% set info = state_attr(entity, 'item_0_title') %}
+        {% set typ = state_attr(entity, 'item_0_type') %}
+        {% if info %}
+          {% if typ == 'maintenance' %}🔧{% elif typ == 'warning' %}⚠️{% elif typ == 'success' %}✅{% else %}ℹ️{% endif %} {{ info }}
+          {% set msg = state_attr(entity, 'item_0_message') %}
+          {% if msg %}
+            {{ msg[:200] }}
+          {% endif %}
+        {% endif %}
+        {% set info1 = state_attr(entity, 'item_1_title') %}
+        {% if info1 %}
+          {% set typ1 = state_attr(entity, 'item_1_type') %}
+          {% if typ1 == 'maintenance' %}🔧{% elif typ1 == 'warning' %}⚠️{% elif typ1 == 'success' %}✅{% else %}ℹ️{% endif %} {{ info1 }}
+        {% endif %}
+        {% set count = states(entity) | int(0) %}
+        {% if count > 2 %}
+          … und {{ count - 2 }} weitere
+        {% endif %}
+      icon: |-
+        {% set typ = state_attr(entity, 'item_0_type') %}
+        {% if typ == 'maintenance' %}mdi:wrench-clock
+        {% elif typ == 'warning' %}mdi:alert
+        {% else %}mdi:information-outline
+        {% endif %}
+      badge_icon: ""
+      badge_color: |-
+        {% set typ = state_attr(entity, 'item_0_type') %}
+        {% if typ == 'maintenance' %}amber
+        {% elif typ == 'warning' %}red
+        {% elif typ == 'success' %}green
+        {% else %}cyan
+        {% endif %}
+      multiline_secondary: true

@@ -34,8 +34,14 @@
       "disruption_active": {
         "name": "Driftsst\u00f6rning"
       },
+      "recently_resolved": {
+        "name": "Nyligen l\u00f6st"
+      },
       "error_active": {
         "name": "Fel"
+      },
+      "general_info_active": {
+        "name": "Allm\u00e4n info"
       }
     },
     "sensor": {
@@ -69,28 +75,34 @@
       "planned_work_status": {
         "name": "Underh\u00e5llsstatus",
         "state": {
-          "upcoming": "Kommande",
+          "scheduled": "Schemalagd",
           "active": "Aktiv",
           "completed": "Slutf\u00f6rd"
         }
       },
-      "error_title": {
-        "name": "Feltitel"
+      "error_message": {
+        "name": "Felmeddelande"
       },
-      "error_description": {
-        "name": "Felbeskrivning"
+      "latest_comment": {
+        "name": "Senaste kommentar"
       },
-      "disruption_title": {
-        "name": "St\u00f6rningstitel"
+      "latest_comment_time": {
+        "name": "Tidpunkt senaste kommentar"
       },
-      "disruption_description": {
-        "name": "St\u00f6rningsbeskrivning"
+      "outage_start_time": {
+        "name": "Avbrott starttid"
+      },
+      "outage_resolved_at": {
+        "name": "Avbrott l\u00f6st"
+      },
+      "resolved_within_hours": {
+        "name": "L\u00f6st inom timmar"
+      },
+      "general_info": {
+        "name": "Allm\u00e4n info"
       },
       "last_update": {
         "name": "Senaste uppdatering"
-      },
-      "disruption_since": {
-        "name": "Driftsst\u00f6rning sedan"
       }
     }
   }

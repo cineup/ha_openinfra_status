@@ -34,8 +34,14 @@
       "disruption_active": {
         "name": "Disruption"
       },
+      "recently_resolved": {
+        "name": "Recently resolved"
+      },
       "error_active": {
         "name": "Error"
+      },
+      "general_info_active": {
+        "name": "General info"
       }
     },
     "sensor": {
@@ -69,28 +75,34 @@
       "planned_work_status": {
         "name": "Planned work status",
         "state": {
-          "upcoming": "Upcoming",
+          "scheduled": "Scheduled",
           "active": "Active",
           "completed": "Completed"
         }
       },
-      "error_title": {
-        "name": "Error title"
+      "error_message": {
+        "name": "Error message"
       },
-      "error_description": {
-        "name": "Error description"
+      "latest_comment": {
+        "name": "Latest comment"
       },
-      "disruption_title": {
-        "name": "Disruption title"
+      "latest_comment_time": {
+        "name": "Latest comment time"
       },
-      "disruption_description": {
-        "name": "Disruption description"
+      "outage_start_time": {
+        "name": "Outage start time"
+      },
+      "outage_resolved_at": {
+        "name": "Outage resolved at"
+      },
+      "resolved_within_hours": {
+        "name": "Resolved within hours"
+      },
+      "general_info": {
+        "name": "General info"
       },
       "last_update": {
         "name": "Last update"
-      },
-      "disruption_since": {
-        "name": "Disruption since"
       }
     }
   }

@@ -41,8 +41,7 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[OpenInfraBinarySensorEntityDescription, ...] =
         translation_key="planned_work_active",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        # CONFIRMED: API returns "is_planned_work" as bool.
-        # SPECULATED: API may also return "planned_work" as dict during events.
+        # JS-CONFIRMED: "is_planned_work" is boolean, "planned_work" is dict.
         value_fn=lambda data: bool(data.get("is_planned_work"))
         or isinstance(data.get("planned_work"), dict),
     ),
@@ -51,20 +50,32 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[OpenInfraBinarySensorEntityDescription, ...] =
         translation_key="disruption_active",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        # CONFIRMED: "is_down" exists as bool (false).
-        # SPECULATED: may become dict with title/description during disruption.
-        # bool() handles both cases correctly.
+        # JS-CONFIRMED: "is_down" stays boolean (never becomes dict).
         value_fn=lambda data: bool(data.get("is_down")),
+    ),
+    OpenInfraBinarySensorEntityDescription(
+        key="recently_resolved",
+        translation_key="recently_resolved",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        # JS-CONFIRMED: "is_recently_resolved" is boolean.
+        value_fn=lambda data: bool(data.get("is_recently_resolved")),
     ),
     OpenInfraBinarySensorEntityDescription(
         key="error_active",
         translation_key="error_active",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        # CONFIRMED: API returns "error" as bool (false) in normal state.
-        # SPECULATED: may become dict with title/description on error.
-        # bool() handles both cases: True for bool true AND for truthy dict.
+        # JS-CONFIRMED: "error" stays boolean (never becomes dict).
         value_fn=lambda data: bool(data.get("error")),
+    ),
+    OpenInfraBinarySensorEntityDescription(
+        key="general_info_active",
+        translation_key="general_info_active",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        # From /api/general endpoint: true when general info items exist.
+        value_fn=lambda data: bool(data.get("general_info")),
     ),
 )
 

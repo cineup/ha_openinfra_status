@@ -34,8 +34,14 @@
       "disruption_active": {
         "name": "St\u00f6rung"
       },
+      "recently_resolved": {
+        "name": "K\u00fcrzlich behoben"
+      },
       "error_active": {
         "name": "Fehler"
+      },
+      "general_info_active": {
+        "name": "Allgemeine Info"
       }
     },
     "sensor": {
@@ -69,28 +75,34 @@
       "planned_work_status": {
         "name": "Wartungsstatus",
         "state": {
-          "upcoming": "Bevorstehend",
+          "scheduled": "Geplant",
           "active": "Aktiv",
           "completed": "Abgeschlossen"
         }
       },
-      "error_title": {
-        "name": "Fehlertitel"
+      "error_message": {
+        "name": "Fehlermeldung"
       },
-      "error_description": {
-        "name": "Fehlerbeschreibung"
+      "latest_comment": {
+        "name": "Letzter Kommentar"
       },
-      "disruption_title": {
-        "name": "St\u00f6rungstitel"
+      "latest_comment_time": {
+        "name": "Zeitpunkt letzter Kommentar"
       },
-      "disruption_description": {
-        "name": "St\u00f6rungsbeschreibung"
+      "outage_start_time": {
+        "name": "Ausfall Beginn"
+      },
+      "outage_resolved_at": {
+        "name": "Ausfall behoben um"
+      },
+      "resolved_within_hours": {
+        "name": "Behoben innerhalb Stunden"
+      },
+      "general_info": {
+        "name": "Allgemeine Info"
       },
       "last_update": {
         "name": "Letztes Update"
-      },
-      "disruption_since": {
-        "name": "St\u00f6rung seit"
       }
     }
   }
