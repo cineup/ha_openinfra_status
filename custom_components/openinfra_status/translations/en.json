@@ -24,18 +24,67 @@
     }
   },
   "entity": {
-    "sensor": {
-      "network_status": {
-        "name": "Network status"
+    "binary_sensor": {
+      "network_connected": {
+        "name": "Network connected"
       },
-      "planned_work": {
+      "planned_work_active": {
         "name": "Planned work"
       },
-      "error": {
-        "name": "Error"
-      },
-      "disruption": {
+      "disruption_active": {
         "name": "Disruption"
+      },
+      "error_active": {
+        "name": "Error"
+      }
+    },
+    "sensor": {
+      "network_status": {
+        "name": "Network status",
+        "state": {
+          "up": "Up",
+          "down": "Down",
+          "maintenance": "Maintenance",
+          "disruption": "Disruption"
+        }
+      },
+      "country_code": {
+        "name": "Country code"
+      },
+      "detected_region": {
+        "name": "Detected region"
+      },
+      "planned_work_title": {
+        "name": "Planned work title"
+      },
+      "planned_work_description": {
+        "name": "Planned work description"
+      },
+      "planned_work_start": {
+        "name": "Planned work start"
+      },
+      "planned_work_end": {
+        "name": "Planned work end"
+      },
+      "planned_work_status": {
+        "name": "Planned work status",
+        "state": {
+          "upcoming": "Upcoming",
+          "active": "Active",
+          "completed": "Completed"
+        }
+      },
+      "error_title": {
+        "name": "Error title"
+      },
+      "error_description": {
+        "name": "Error description"
+      },
+      "disruption_title": {
+        "name": "Disruption title"
+      },
+      "disruption_description": {
+        "name": "Disruption description"
       },
       "last_update": {
         "name": "Last update"
