@@ -24,18 +24,67 @@
     }
   },
   "entity": {
-    "sensor": {
-      "network_status": {
-        "name": "Netzwerkstatus"
+    "binary_sensor": {
+      "network_connected": {
+        "name": "Netzwerk verbunden"
       },
-      "planned_work": {
+      "planned_work_active": {
         "name": "Geplante Wartung"
       },
-      "error": {
-        "name": "Fehler"
-      },
-      "disruption": {
+      "disruption_active": {
         "name": "St\u00f6rung"
+      },
+      "error_active": {
+        "name": "Fehler"
+      }
+    },
+    "sensor": {
+      "network_status": {
+        "name": "Netzwerkstatus",
+        "state": {
+          "up": "Verf\u00fcgbar",
+          "down": "Nicht verf\u00fcgbar",
+          "maintenance": "Wartung",
+          "disruption": "St\u00f6rung"
+        }
+      },
+      "country_code": {
+        "name": "L\u00e4ndercode"
+      },
+      "detected_region": {
+        "name": "Erkannte Region"
+      },
+      "planned_work_title": {
+        "name": "Wartungstitel"
+      },
+      "planned_work_description": {
+        "name": "Wartungsbeschreibung"
+      },
+      "planned_work_start": {
+        "name": "Wartungsbeginn"
+      },
+      "planned_work_end": {
+        "name": "Wartungsende"
+      },
+      "planned_work_status": {
+        "name": "Wartungsstatus",
+        "state": {
+          "upcoming": "Bevorstehend",
+          "active": "Aktiv",
+          "completed": "Abgeschlossen"
+        }
+      },
+      "error_title": {
+        "name": "Fehlertitel"
+      },
+      "error_description": {
+        "name": "Fehlerbeschreibung"
+      },
+      "disruption_title": {
+        "name": "St\u00f6rungstitel"
+      },
+      "disruption_description": {
+        "name": "St\u00f6rungsbeschreibung"
       },
       "last_update": {
         "name": "Letztes Update"

@@ -24,18 +24,67 @@
     }
   },
   "entity": {
-    "sensor": {
-      "network_status": {
-        "name": "Nettverksstatus"
+    "binary_sensor": {
+      "network_connected": {
+        "name": "Nettverk tilkoblet"
       },
-      "planned_work": {
+      "planned_work_active": {
         "name": "Planlagt vedlikehold"
       },
-      "error": {
-        "name": "Feil"
-      },
-      "disruption": {
+      "disruption_active": {
         "name": "Driftsforstyrrelse"
+      },
+      "error_active": {
+        "name": "Feil"
+      }
+    },
+    "sensor": {
+      "network_status": {
+        "name": "Nettverksstatus",
+        "state": {
+          "up": "Tilgjengelig",
+          "down": "Ikke tilgjengelig",
+          "maintenance": "Vedlikehold",
+          "disruption": "Driftsforstyrrelse"
+        }
+      },
+      "country_code": {
+        "name": "Landkode"
+      },
+      "detected_region": {
+        "name": "Oppdaget region"
+      },
+      "planned_work_title": {
+        "name": "Vedlikeholdstittel"
+      },
+      "planned_work_description": {
+        "name": "Vedlikeholdsbeskrivelse"
+      },
+      "planned_work_start": {
+        "name": "Vedlikeholdsstart"
+      },
+      "planned_work_end": {
+        "name": "Vedlikeholdsslutt"
+      },
+      "planned_work_status": {
+        "name": "Vedlikeholdsstatus",
+        "state": {
+          "upcoming": "Kommende",
+          "active": "Aktiv",
+          "completed": "Fullf\u00f8rt"
+        }
+      },
+      "error_title": {
+        "name": "Feiltittel"
+      },
+      "error_description": {
+        "name": "Feilbeskrivelse"
+      },
+      "disruption_title": {
+        "name": "Forstyrrelsestitel"
+      },
+      "disruption_description": {
+        "name": "Forstyrrelsebeskrivelse"
       },
       "last_update": {
         "name": "Siste oppdatering"

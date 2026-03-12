@@ -12,6 +12,7 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
 )
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -27,86 +28,139 @@ class OpenInfraSensorEntityDescription(SensorEntityDescription):
     """Describe an OpenInfra sensor entity."""
 
     value_fn: Callable[[dict[str, Any], OpenInfraDataUpdateCoordinator], Any]
-    extra_attrs_fn: Callable[[dict[str, Any]], dict[str, Any]] | None = None
 
 
-def _get_event_title(data: dict[str, Any], key: str) -> str | None:
-    """Extract title from an event object (planned_work, error, is_down)."""
+def _get_event_field(data: dict[str, Any], key: str, field: str) -> str | None:
+    """Extract a field from an event object (planned_work, error, is_down)."""
     event = data.get(key)
     if isinstance(event, dict):
-        return event.get("title")
+        return event.get(field)
     return None
 
 
-def _get_event_attrs(data: dict[str, Any], key: str) -> dict[str, Any]:
-    """Extract all attributes from an event object.
-
-    Handles both boolean and dict responses from the API.
-    Known fields are mapped explicitly; unknown fields are passed through.
-    """
-    event = data.get(key)
-    if not isinstance(event, dict):
-        return {}
-    known_keys = {"title"}
-    attrs: dict[str, Any] = {}
-    for field in ("description", "id", "start_time", "end_time"):
-        if field in event:
-            attrs[field] = event[field]
-    # Pass through any extra fields the API may add
-    for field, value in event.items():
-        if field not in known_keys and field not in attrs:
-            attrs[field] = value
-    return attrs
-
-
-def _get_network_status_attrs(data: dict[str, Any]) -> dict[str, Any]:
-    """Return extra attributes for the network status sensor."""
-    return {
-        "country_code": data.get("country_code"),
-        "detected_region": data.get("detected_region"),
-    }
-
-
-def _get_planned_work_attrs(data: dict[str, Any]) -> dict[str, Any]:
-    """Return planned work attributes including top-level status."""
-    attrs = _get_event_attrs(data, "planned_work")
-    status = data.get("planned_work_status")
-    if status is not None:
-        attrs["status"] = status
-    return attrs
+def _parse_iso_timestamp(value: str | None) -> datetime | None:
+    """Parse an ISO 8601 timestamp string into a timezone-aware datetime."""
+    if not value:
+        return None
+    try:
+        return dt_util.parse_datetime(value)
+    except (ValueError, TypeError):
+        return None
 
 
 SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
+    # --- Network status (ENUM) ---
+    # CONFIRMED: "network_status" field exists, value "up" observed.
+    # SPECULATED: values "down", "maintenance", "disruption" assumed possible.
     OpenInfraSensorEntityDescription(
         key="network_status",
         translation_key="network_status",
+        device_class=SensorDeviceClass.ENUM,
+        options=["up", "down", "maintenance", "disruption"],
         value_fn=lambda data, _coord: data.get("network_status"),
-        extra_attrs_fn=_get_network_status_attrs,
+    ),
+    # --- Context / diagnostic ---
+    # CONFIRMED: "country_code" exists (e.g. "DE").
+    OpenInfraSensorEntityDescription(
+        key="country_code",
+        translation_key="country_code",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data, _coord: data.get("country_code"),
+    ),
+    # CONFIRMED: "detected_region" exists (e.g. "se").
+    OpenInfraSensorEntityDescription(
+        key="detected_region",
+        translation_key="detected_region",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data, _coord: data.get("detected_region"),
+    ),
+    # --- Planned work detail sensors ---
+    # SPECULATED: entire "planned_work" dict structure (title, description,
+    # start_time, end_time) has never been observed.  API only confirmed to
+    # return "is_planned_work" as bool.  These sensors will remain None until
+    # the API returns a "planned_work" dict during an actual event.
+    OpenInfraSensorEntityDescription(
+        key="planned_work_title",
+        translation_key="planned_work_title",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data, _coord: _get_event_field(data, "planned_work", "title"),
     ),
     OpenInfraSensorEntityDescription(
-        key="planned_work",
-        translation_key="planned_work",
-        value_fn=lambda data, _coord: _get_event_title(data, "planned_work"),
-        extra_attrs_fn=_get_planned_work_attrs,
+        key="planned_work_description",
+        translation_key="planned_work_description",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data, _coord: _get_event_field(
+            data, "planned_work", "description"
+        ),
     ),
     OpenInfraSensorEntityDescription(
-        key="error",
-        translation_key="error",
-        value_fn=lambda data, _coord: _get_event_title(data, "error"),
-        extra_attrs_fn=lambda data: _get_event_attrs(data, "error"),
+        key="planned_work_start",
+        translation_key="planned_work_start",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data, _coord: _parse_iso_timestamp(
+            _get_event_field(data, "planned_work", "start_time")
+        ),
     ),
     OpenInfraSensorEntityDescription(
-        key="disruption",
-        translation_key="disruption",
-        value_fn=lambda data, _coord: _get_event_title(data, "is_down"),
-        extra_attrs_fn=lambda data: _get_event_attrs(data, "is_down"),
+        key="planned_work_end",
+        translation_key="planned_work_end",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data, _coord: _parse_iso_timestamp(
+            _get_event_field(data, "planned_work", "end_time")
+        ),
     ),
+    # SPECULATED: "planned_work_status" field never observed in API response.
+    OpenInfraSensorEntityDescription(
+        key="planned_work_status",
+        translation_key="planned_work_status",
+        device_class=SensorDeviceClass.ENUM,
+        options=["upcoming", "active", "completed"],
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data, _coord: data.get("planned_work_status"),
+    ),
+    # --- Error detail sensors ---
+    # SPECULATED: "error" as dict with title/description never observed.
+    # CONFIRMED: "error" is bool (false) in normal state.
+    OpenInfraSensorEntityDescription(
+        key="error_title",
+        translation_key="error_title",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data, _coord: _get_event_field(data, "error", "title"),
+    ),
+    OpenInfraSensorEntityDescription(
+        key="error_description",
+        translation_key="error_description",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data, _coord: _get_event_field(data, "error", "description"),
+    ),
+    # --- Disruption detail sensors ---
+    # SPECULATED: "is_down" as dict with title/description never observed.
+    # CONFIRMED: "is_down" is bool (false) in normal state.
+    OpenInfraSensorEntityDescription(
+        key="disruption_title",
+        translation_key="disruption_title",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data, _coord: _get_event_field(data, "is_down", "title"),
+    ),
+    OpenInfraSensorEntityDescription(
+        key="disruption_description",
+        translation_key="disruption_description",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data, _coord: _get_event_field(
+            data, "is_down", "description"
+        ),
+    ),
+    # --- Timestamp sensors ---
+    # LOCAL: generated client-side, not from API.
     OpenInfraSensorEntityDescription(
         key="last_update",
         translation_key="last_update",
         device_class=SensorDeviceClass.TIMESTAMP,
         value_fn=lambda data, _coord: dt_util.now(),
     ),
+    # LOCAL: tracked by coordinator, not from API.
     OpenInfraSensorEntityDescription(
         key="disruption_since",
         translation_key="disruption_since",
@@ -166,13 +220,3 @@ class OpenInfraSensorEntity(
         return self.entity_description.value_fn(
             self.coordinator.data, self.coordinator
         )
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any] | None:
-        """Return extra state attributes."""
-        if (
-            self.entity_description.extra_attrs_fn is not None
-            and self.coordinator.data is not None
-        ):
-            return self.entity_description.extra_attrs_fn(self.coordinator.data)
-        return None

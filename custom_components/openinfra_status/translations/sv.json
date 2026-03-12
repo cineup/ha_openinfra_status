@@ -24,18 +24,67 @@
     }
   },
   "entity": {
-    "sensor": {
-      "network_status": {
-        "name": "N\u00e4tverksstatus"
+    "binary_sensor": {
+      "network_connected": {
+        "name": "N\u00e4tverk anslutet"
       },
-      "planned_work": {
+      "planned_work_active": {
         "name": "Planerat underh\u00e5ll"
       },
-      "error": {
-        "name": "Fel"
-      },
-      "disruption": {
+      "disruption_active": {
         "name": "Driftsst\u00f6rning"
+      },
+      "error_active": {
+        "name": "Fel"
+      }
+    },
+    "sensor": {
+      "network_status": {
+        "name": "N\u00e4tverksstatus",
+        "state": {
+          "up": "Tillg\u00e4nglig",
+          "down": "Ej tillg\u00e4nglig",
+          "maintenance": "Underh\u00e5ll",
+          "disruption": "Driftsst\u00f6rning"
+        }
+      },
+      "country_code": {
+        "name": "Landskod"
+      },
+      "detected_region": {
+        "name": "Identifierad region"
+      },
+      "planned_work_title": {
+        "name": "Underh\u00e5llstitel"
+      },
+      "planned_work_description": {
+        "name": "Underh\u00e5llsbeskrivning"
+      },
+      "planned_work_start": {
+        "name": "Underh\u00e5llsstart"
+      },
+      "planned_work_end": {
+        "name": "Underh\u00e5llsslutt"
+      },
+      "planned_work_status": {
+        "name": "Underh\u00e5llsstatus",
+        "state": {
+          "upcoming": "Kommande",
+          "active": "Aktiv",
+          "completed": "Slutf\u00f6rd"
+        }
+      },
+      "error_title": {
+        "name": "Feltitel"
+      },
+      "error_description": {
+        "name": "Felbeskrivning"
+      },
+      "disruption_title": {
+        "name": "St\u00f6rningstitel"
+      },
+      "disruption_description": {
+        "name": "St\u00f6rningsbeskrivning"
       },
       "last_update": {
         "name": "Senaste uppdatering"

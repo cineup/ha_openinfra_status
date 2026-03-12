@@ -26,7 +26,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR]
 
 OpenInfraConfigEntry: TypeAlias = ConfigEntry
 
@@ -78,7 +78,9 @@ class OpenInfraDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         _LOGGER.debug("OpenInfra API response: %s", data)
 
-        # Track disruption start time (is_down can be bool or dict)
+        # Track disruption start time locally (not provided by API).
+        # CONFIRMED: "is_down" is bool (false) in normal state.
+        # SPECULATED: may become dict (with title/description) during disruption.
         is_down = data.get("is_down", False)
         if is_down and self._disruption_since is None:
             self._disruption_since = datetime.now().astimezone()
