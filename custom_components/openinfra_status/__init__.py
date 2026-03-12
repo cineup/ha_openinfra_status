@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import timedelta
 import logging
 from typing import Any, TypeAlias
 
@@ -16,6 +16,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
+    API_GENERAL_URL,
     API_TIMEOUT,
     API_URL,
     CONF_COUNTRY,
@@ -41,7 +42,6 @@ class OpenInfraDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.country = entry.data[CONF_COUNTRY]
         self.postcode = entry.data[CONF_POSTCODE]
         self.session = async_get_clientsession(hass)
-        self._disruption_since: datetime | None = None
 
         super().__init__(
             hass,
@@ -51,13 +51,8 @@ class OpenInfraDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             config_entry=entry,
         )
 
-    @property
-    def disruption_since(self) -> datetime | None:
-        """Return the timestamp when the current disruption started."""
-        return self._disruption_since
-
     async def _async_update_data(self) -> dict[str, Any]:
-        """Fetch data from API."""
+        """Fetch data from both API endpoints."""
         try:
             async with asyncio.timeout(API_TIMEOUT):
                 resp = await self.session.get(
@@ -78,14 +73,26 @@ class OpenInfraDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         _LOGGER.debug("OpenInfra API response: %s", data)
 
-        # Track disruption start time locally (not provided by API).
-        # CONFIRMED: "is_down" is bool (false) in normal state.
-        # SPECULATED: may become dict (with title/description) during disruption.
-        is_down = data.get("is_down", False)
-        if is_down and self._disruption_since is None:
-            self._disruption_since = datetime.now().astimezone()
-        elif not is_down:
-            self._disruption_since = None
+        # Fetch general info (non-postcode-specific maintenance/outage info).
+        # This is a secondary call; failures here should not block the main data.
+        try:
+            async with asyncio.timeout(API_TIMEOUT):
+                # JS uses "gb" for "uk" country code
+                country_param = "gb" if self.country == "uk" else self.country
+                general_resp = await self.session.get(
+                    API_GENERAL_URL,
+                    params={"country": country_param},
+                )
+                general_data = await general_resp.json()
+
+            if general_data.get("has_info") and general_data.get("info"):
+                info = general_data["info"]
+                data["general_info"] = info if isinstance(info, list) else [info]
+            else:
+                data["general_info"] = []
+        except (aiohttp.ClientError, asyncio.TimeoutError):
+            _LOGGER.debug("Failed to fetch general info, continuing without it")
+            data["general_info"] = []
 
         return data
 

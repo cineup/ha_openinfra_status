@@ -34,8 +34,14 @@
       "disruption_active": {
         "name": "Driftsforstyrrelse"
       },
+      "recently_resolved": {
+        "name": "Nylig l\u00f8st"
+      },
       "error_active": {
         "name": "Feil"
+      },
+      "general_info_active": {
+        "name": "Generell info"
       }
     },
     "sensor": {
@@ -69,28 +75,34 @@
       "planned_work_status": {
         "name": "Vedlikeholdsstatus",
         "state": {
-          "upcoming": "Kommende",
+          "scheduled": "Planlagt",
           "active": "Aktiv",
           "completed": "Fullf\u00f8rt"
         }
       },
-      "error_title": {
-        "name": "Feiltittel"
+      "error_message": {
+        "name": "Feilmelding"
       },
-      "error_description": {
-        "name": "Feilbeskrivelse"
+      "latest_comment": {
+        "name": "Siste kommentar"
       },
-      "disruption_title": {
-        "name": "Forstyrrelsestitel"
+      "latest_comment_time": {
+        "name": "Tidspunkt siste kommentar"
       },
-      "disruption_description": {
-        "name": "Forstyrrelsebeskrivelse"
+      "outage_start_time": {
+        "name": "Driftsavbrudd starttid"
+      },
+      "outage_resolved_at": {
+        "name": "Driftsavbrudd l\u00f8st"
+      },
+      "resolved_within_hours": {
+        "name": "L\u00f8st innen timer"
+      },
+      "general_info": {
+        "name": "Generell info"
       },
       "last_update": {
         "name": "Siste oppdatering"
-      },
-      "disruption_since": {
-        "name": "Driftsforstyrrelse siden"
       }
     }
   }
