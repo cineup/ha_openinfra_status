@@ -33,6 +33,7 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[OpenInfraBinarySensorEntityDescription, ...] =
         key="network_connected",
         translation_key="network_connected",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        # CONFIRMED: "network_status" exists, value "up" observed.
         value_fn=lambda data: data.get("network_status") == "up",
     ),
     OpenInfraBinarySensorEntityDescription(
@@ -40,13 +41,19 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[OpenInfraBinarySensorEntityDescription, ...] =
         translation_key="planned_work_active",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data: isinstance(data.get("planned_work"), dict),
+        # CONFIRMED: API returns "is_planned_work" as bool.
+        # SPECULATED: API may also return "planned_work" as dict during events.
+        value_fn=lambda data: bool(data.get("is_planned_work"))
+        or isinstance(data.get("planned_work"), dict),
     ),
     OpenInfraBinarySensorEntityDescription(
         key="disruption_active",
         translation_key="disruption_active",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
+        # CONFIRMED: "is_down" exists as bool (false).
+        # SPECULATED: may become dict with title/description during disruption.
+        # bool() handles both cases correctly.
         value_fn=lambda data: bool(data.get("is_down")),
     ),
     OpenInfraBinarySensorEntityDescription(
@@ -54,7 +61,10 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[OpenInfraBinarySensorEntityDescription, ...] =
         translation_key="error_active",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data: isinstance(data.get("error"), dict),
+        # CONFIRMED: API returns "error" as bool (false) in normal state.
+        # SPECULATED: may become dict with title/description on error.
+        # bool() handles both cases: True for bool true AND for truthy dict.
+        value_fn=lambda data: bool(data.get("error")),
     ),
 )
 

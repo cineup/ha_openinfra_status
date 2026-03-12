@@ -50,6 +50,8 @@ def _parse_iso_timestamp(value: str | None) -> datetime | None:
 
 SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
     # --- Network status (ENUM) ---
+    # CONFIRMED: "network_status" field exists, value "up" observed.
+    # SPECULATED: values "down", "maintenance", "disruption" assumed possible.
     OpenInfraSensorEntityDescription(
         key="network_status",
         translation_key="network_status",
@@ -58,12 +60,14 @@ SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
         value_fn=lambda data, _coord: data.get("network_status"),
     ),
     # --- Context / diagnostic ---
+    # CONFIRMED: "country_code" exists (e.g. "DE").
     OpenInfraSensorEntityDescription(
         key="country_code",
         translation_key="country_code",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda data, _coord: data.get("country_code"),
     ),
+    # CONFIRMED: "detected_region" exists (e.g. "se").
     OpenInfraSensorEntityDescription(
         key="detected_region",
         translation_key="detected_region",
@@ -71,6 +75,10 @@ SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
         value_fn=lambda data, _coord: data.get("detected_region"),
     ),
     # --- Planned work detail sensors ---
+    # SPECULATED: entire "planned_work" dict structure (title, description,
+    # start_time, end_time) has never been observed.  API only confirmed to
+    # return "is_planned_work" as bool.  These sensors will remain None until
+    # the API returns a "planned_work" dict during an actual event.
     OpenInfraSensorEntityDescription(
         key="planned_work_title",
         translation_key="planned_work_title",
@@ -103,6 +111,7 @@ SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
             _get_event_field(data, "planned_work", "end_time")
         ),
     ),
+    # SPECULATED: "planned_work_status" field never observed in API response.
     OpenInfraSensorEntityDescription(
         key="planned_work_status",
         translation_key="planned_work_status",
@@ -112,6 +121,8 @@ SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
         value_fn=lambda data, _coord: data.get("planned_work_status"),
     ),
     # --- Error detail sensors ---
+    # SPECULATED: "error" as dict with title/description never observed.
+    # CONFIRMED: "error" is bool (false) in normal state.
     OpenInfraSensorEntityDescription(
         key="error_title",
         translation_key="error_title",
@@ -125,6 +136,8 @@ SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
         value_fn=lambda data, _coord: _get_event_field(data, "error", "description"),
     ),
     # --- Disruption detail sensors ---
+    # SPECULATED: "is_down" as dict with title/description never observed.
+    # CONFIRMED: "is_down" is bool (false) in normal state.
     OpenInfraSensorEntityDescription(
         key="disruption_title",
         translation_key="disruption_title",
@@ -139,13 +152,15 @@ SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
             data, "is_down", "description"
         ),
     ),
-    # --- Timestamp sensors (unchanged) ---
+    # --- Timestamp sensors ---
+    # LOCAL: generated client-side, not from API.
     OpenInfraSensorEntityDescription(
         key="last_update",
         translation_key="last_update",
         device_class=SensorDeviceClass.TIMESTAMP,
         value_fn=lambda data, _coord: dt_util.now(),
     ),
+    # LOCAL: tracked by coordinator, not from API.
     OpenInfraSensorEntityDescription(
         key="disruption_since",
         translation_key="disruption_since",
