@@ -60,44 +60,6 @@
       "detected_region": {
         "name": "Oppdaget region"
       },
-      "planned_work_title": {
-        "name": "Vedlikeholdstittel"
-      },
-      "planned_work_description": {
-        "name": "Vedlikeholdsbeskrivelse"
-      },
-      "planned_work_start": {
-        "name": "Vedlikeholdsstart"
-      },
-      "planned_work_end": {
-        "name": "Vedlikeholdsslutt"
-      },
-      "planned_work_status": {
-        "name": "Vedlikeholdsstatus",
-        "state": {
-          "scheduled": "Planlagt",
-          "active": "Aktiv",
-          "completed": "Fullf\u00f8rt"
-        }
-      },
-      "error_message": {
-        "name": "Feilmelding"
-      },
-      "latest_comment": {
-        "name": "Siste kommentar"
-      },
-      "latest_comment_time": {
-        "name": "Tidspunkt siste kommentar"
-      },
-      "outage_start_time": {
-        "name": "Driftsavbrudd starttid"
-      },
-      "outage_resolved_at": {
-        "name": "Driftsavbrudd l\u00f8st"
-      },
-      "resolved_within_hours": {
-        "name": "L\u00f8st innen timer"
-      },
       "general_info": {
         "name": "Generell info"
       },

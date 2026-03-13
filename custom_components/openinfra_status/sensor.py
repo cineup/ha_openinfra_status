@@ -95,6 +95,48 @@ def _get_general_info_count(data: dict[str, Any]) -> int | None:
     return len(info_list)
 
 
+def _build_network_status_attrs(data: dict[str, Any]) -> dict[str, Any]:
+    """Build extra_state_attributes for the network_status sensor.
+
+    Consolidates planned work, disruption, error, and resolution details
+    that were previously exposed as individual diagnostic sensors.
+    """
+    attrs: dict[str, Any] = {}
+
+    # --- Planned work ---
+    pw = data.get("planned_work")
+    if isinstance(pw, dict):
+        attrs["planned_work_title"] = pw.get("title")
+        attrs["planned_work_description"] = pw.get("description")
+        attrs["planned_work_start"] = pw.get("start_time")
+        attrs["planned_work_end"] = pw.get("end_time")
+    if data.get("planned_work_status"):
+        attrs["planned_work_status"] = data["planned_work_status"]
+
+    # --- Disruption ---
+    if data.get("outage_start_time"):
+        attrs["outage_start_time"] = data["outage_start_time"]
+    comment_text = _get_latest_comment_text(data)
+    if comment_text:
+        attrs["latest_comment"] = comment_text
+    comment_ts = _get_latest_comment_timestamp(data)
+    if comment_ts:
+        attrs["latest_comment_time"] = comment_ts.isoformat()
+
+    # --- Resolution ---
+    resolved_at = data.get("end_time") or data.get("outage_resolved_at")
+    if resolved_at:
+        attrs["outage_resolved_at"] = resolved_at
+    if data.get("resolved_within_hours") is not None:
+        attrs["resolved_within_hours"] = data["resolved_within_hours"]
+
+    # --- Error ---
+    if data.get("error") and data.get("error_message"):
+        attrs["error_message"] = data["error_message"]
+
+    return attrs
+
+
 SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
     # --- Network status (ENUM) ---
     # CONFIRMED: "network_status" field exists, value "up" observed.
@@ -120,104 +162,9 @@ SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda data, _coord: data.get("detected_region"),
     ),
-    # --- Planned work detail sensors ---
-    # JS-CONFIRMED: "planned_work" is a dict with title, description,
-    # start_time, end_time when is_planned_work is true.
-    OpenInfraSensorEntityDescription(
-        key="planned_work_title",
-        translation_key="planned_work_title",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data, _coord: _get_event_field(data, "planned_work", "title"),
-    ),
-    OpenInfraSensorEntityDescription(
-        key="planned_work_description",
-        translation_key="planned_work_description",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data, _coord: _get_event_field(
-            data, "planned_work", "description"
-        ),
-    ),
-    OpenInfraSensorEntityDescription(
-        key="planned_work_start",
-        translation_key="planned_work_start",
-        device_class=SensorDeviceClass.TIMESTAMP,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data, _coord: _parse_iso_timestamp(
-            _get_event_field(data, "planned_work", "start_time")
-        ),
-    ),
-    OpenInfraSensorEntityDescription(
-        key="planned_work_end",
-        translation_key="planned_work_end",
-        device_class=SensorDeviceClass.TIMESTAMP,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data, _coord: _parse_iso_timestamp(
-            _get_event_field(data, "planned_work", "end_time")
-        ),
-    ),
-    # JS-CONFIRMED: "planned_work_status" is "scheduled" for future work,
-    # other values indicate active. NOT "upcoming" as previously assumed.
-    OpenInfraSensorEntityDescription(
-        key="planned_work_status",
-        translation_key="planned_work_status",
-        device_class=SensorDeviceClass.ENUM,
-        options=["scheduled", "active", "completed"],
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data, _coord: data.get("planned_work_status"),
-    ),
-    # --- Error sensors ---
-    # JS-CONFIRMED: "error" stays boolean. Error text is in "error_message".
-    OpenInfraSensorEntityDescription(
-        key="error_message",
-        translation_key="error_message",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data, _coord: data.get("error_message")
-        if data.get("error")
-        else None,
-    ),
-    # --- Disruption detail sensors ---
-    # JS-CONFIRMED: "is_down" stays boolean. Disruption details come from
-    # "comments" array and "outage_start_time".
-    OpenInfraSensorEntityDescription(
-        key="latest_comment",
-        translation_key="latest_comment",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data, _coord: _get_latest_comment_text(data),
-    ),
-    OpenInfraSensorEntityDescription(
-        key="latest_comment_time",
-        translation_key="latest_comment_time",
-        device_class=SensorDeviceClass.TIMESTAMP,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data, _coord: _get_latest_comment_timestamp(data),
-    ),
-    # JS-CONFIRMED: API provides outage_start_time (no local tracking needed).
-    OpenInfraSensorEntityDescription(
-        key="outage_start_time",
-        translation_key="outage_start_time",
-        device_class=SensorDeviceClass.TIMESTAMP,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data, _coord: _parse_iso_timestamp(
-            data.get("outage_start_time")
-        ),
-    ),
-    # JS-CONFIRMED: resolution timestamp when outage was recently resolved.
-    OpenInfraSensorEntityDescription(
-        key="outage_resolved_at",
-        translation_key="outage_resolved_at",
-        device_class=SensorDeviceClass.TIMESTAMP,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data, _coord: _parse_iso_timestamp(
-            data.get("end_time") or data.get("outage_resolved_at")
-        ),
-    ),
-    # JS-CONFIRMED: hours since outage was resolved.
-    OpenInfraSensorEntityDescription(
-        key="resolved_within_hours",
-        translation_key="resolved_within_hours",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data, _coord: data.get("resolved_within_hours"),
-    ),
+    # NOTE: Planned work, disruption, error, and resolution details are
+    # exposed as extra_state_attributes on the network_status sensor
+    # (see _build_network_status_attrs below) instead of individual sensors.
     # --- General info (from /api/general) ---
     # CONFIRMED: info items have id, title, message, type, start_time, end_time.
     OpenInfraSensorEntityDescription(
@@ -291,22 +238,30 @@ class OpenInfraSensorEntity(
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return additional state attributes."""
-        if self.entity_description.key != "general_info":
-            return None
         if self.coordinator.data is None:
             return None
-        info_list = self.coordinator.data.get("general_info")
-        if not isinstance(info_list, list) or not info_list:
-            return None
-        attrs: dict[str, Any] = {}
-        for i, item in enumerate(info_list):
-            if not isinstance(item, dict):
-                continue
-            prefix = f"item_{i}"
-            attrs[f"{prefix}_id"] = item.get("id")
-            attrs[f"{prefix}_title"] = item.get("title")
-            attrs[f"{prefix}_message"] = item.get("message")
-            attrs[f"{prefix}_type"] = item.get("type")
-            attrs[f"{prefix}_start_time"] = item.get("start_time")
-            attrs[f"{prefix}_end_time"] = item.get("end_time")
-        return attrs
+
+        key = self.entity_description.key
+
+        if key == "network_status":
+            attrs = _build_network_status_attrs(self.coordinator.data)
+            return attrs or None
+
+        if key == "general_info":
+            info_list = self.coordinator.data.get("general_info")
+            if not isinstance(info_list, list) or not info_list:
+                return None
+            attrs: dict[str, Any] = {}
+            for i, item in enumerate(info_list):
+                if not isinstance(item, dict):
+                    continue
+                prefix = f"item_{i}"
+                attrs[f"{prefix}_id"] = item.get("id")
+                attrs[f"{prefix}_title"] = item.get("title")
+                attrs[f"{prefix}_message"] = item.get("message")
+                attrs[f"{prefix}_type"] = item.get("type")
+                attrs[f"{prefix}_start_time"] = item.get("start_time")
+                attrs[f"{prefix}_end_time"] = item.get("end_time")
+            return attrs
+
+        return None
