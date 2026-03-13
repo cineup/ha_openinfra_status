@@ -23,44 +23,44 @@ cards:
       {% set s = states(entity) %}
       {% set resolved = is_state('binary_sensor.openinfra_15746_kurzlich_behoben', 'on') %}
       {% if s == 'down' %}
-        {% set seit = states('sensor.openinfra_15746_ausfall_beginn') %}
-        {% if seit not in ['unknown', 'unavailable'] %}
-          {% set start = as_datetime(seit) %}
+        {% set seit = state_attr(entity, 'outage_start_time') %}
+        {% if seit not in [None, none, 'None', ''] %}
+          {% set start = as_datetime(seit).astimezone(now().tzinfo) %}
           {% set dauer = now() - start %}
           {% set h = (dauer.total_seconds() // 3600) | int %}
           {% set m = ((dauer.total_seconds() % 3600) // 60) | int %}
-          ⚡ {{ h }}:{{ '%02d' | format(m) }}h seit {{ start.strftime('%d.%m.%y %H:%M') }}
+          {{ h }}:{{ '%02d' | format(m) }}h seit {{ start.strftime('%d.%m.%y %H:%M') }}
         {% else %}
-          ⚡ Störung aktiv
+          Störung aktiv
         {% endif %}
-        {% set kommentar = states('sensor.openinfra_15746_letzter_kommentar') %}
-        {% if kommentar not in ['unknown', 'unavailable', 'None'] %}
+        {% set kommentar = state_attr(entity, 'latest_comment') %}
+        {% if kommentar not in [None, none, 'None', ''] %}
           {{ kommentar[:120] }}
         {% endif %}
-        {% set upd = states('sensor.openinfra_15746_letztes_update') %}
-        {% if upd not in ['unknown', 'unavailable'] %}
-          · Update {{ as_datetime(upd).astimezone(now().tzinfo).strftime('%H:%M') }}
+        {% set upd = state_attr(entity, 'latest_comment_time') %}
+        {% if upd not in [None, none, 'None', ''] %}
+          Update {{ as_datetime(upd).astimezone(now().tzinfo).strftime('%H:%M') }}
         {% endif %}
       {% elif s == 'maintenance' %}
-        {% set titel = states('sensor.openinfra_15746_wartungstitel') %}
-        {% if titel not in ['unknown', 'unavailable', 'None'] %}
+        {% set titel = state_attr(entity, 'planned_work_title') %}
+        {% if titel not in [None, none, 'None', ''] %}
           {{ titel }}
         {% endif %}
-        {% set start = states('sensor.openinfra_15746_wartungsbeginn') %}
-        {% set end = states('sensor.openinfra_15746_wartungsende') %}
-        {% if start not in ['unknown', 'unavailable'] %}
+        {% set start = state_attr(entity, 'planned_work_start') %}
+        {% set end = state_attr(entity, 'planned_work_end') %}
+        {% if start not in [None, none, 'None', ''] %}
           {% set s_dt = as_datetime(start).astimezone(now().tzinfo) %}
-          · {{ s_dt.strftime('%d.%m.%y %H:%M') }}
-          {% if end not in ['unknown', 'unavailable'] %}
+          {{ s_dt.strftime('%d.%m.%y %H:%M') }}
+          {% if end not in [None, none, 'None', ''] %}
             {% set e_dt = as_datetime(end).astimezone(now().tzinfo) %}
             → {{ e_dt.strftime('%H:%M') }}
           {% endif %}
         {% endif %}
       {% elif resolved %}
-        ✅ Störung wurde behoben
-        {% set resolved_at = states('sensor.openinfra_15746_ausfall_behoben_um') %}
-        {% if resolved_at not in ['unknown', 'unavailable'] %}
-          · {{ as_datetime(resolved_at).astimezone(now().tzinfo).strftime('%d.%m.%y %H:%M') }}
+        Störung wurde behoben
+        {% set resolved_at = state_attr(entity, 'outage_resolved_at') %}
+        {% if resolved_at not in [None, none, 'None', ''] %}
+          {{ as_datetime(resolved_at).astimezone(now().tzinfo).strftime('%d.%m.%y %H:%M') }}
         {% endif %}
       {% elif s == 'up' %}
         Keine Störungen in Ihrem Bereich gefunden.
@@ -91,6 +91,7 @@ cards:
   # ── General info items (maintenance/info/warning) ─────────────────
   # Shows all general info items from /api/general endpoint.
   # These are country-wide notices, not specific to your postcode.
+  # Badge shows the count (max 9). Tap opens the OpenInfra status page.
   - type: conditional
     conditions:
       - entity: binary_sensor.openinfra_15746_allgemeine_info
@@ -104,31 +105,42 @@ cards:
         {% else %}{{ count }} allgemeine Meldungen
         {% endif %}
       secondary: |
-        {% set info = state_attr(entity, 'item_0_title') %}
-        {% set typ = state_attr(entity, 'item_0_type') %}
-        {% if info %}
-          {% if typ == 'maintenance' %}🔧{% elif typ == 'warning' %}⚠️{% elif typ == 'success' %}✅{% else %}ℹ️{% endif %} {{ info }}
-          {% set msg = state_attr(entity, 'item_0_message') %}
-          {% if msg %}
-            {{ msg[:200] }}
-          {% endif %}
-        {% endif %}
-        {% set info1 = state_attr(entity, 'item_1_title') %}
-        {% if info1 %}
-          {% set typ1 = state_attr(entity, 'item_1_type') %}
-          {% if typ1 == 'maintenance' %}🔧{% elif typ1 == 'warning' %}⚠️{% elif typ1 == 'success' %}✅{% else %}ℹ️{% endif %} {{ info1 }}
-        {% endif %}
         {% set count = states(entity) | int(0) %}
-        {% if count > 2 %}
-          … und {{ count - 2 }} weitere
-        {% endif %}
+        {% for i in range(count) %}
+          {% set title = state_attr(entity, 'item_' ~ i ~ '_title') %}
+          {% set typ = state_attr(entity, 'item_' ~ i ~ '_type') %}
+          {% if title %}
+            {% if typ == 'maintenance' %}🔧{% elif typ == 'warning' %}⚠️{% elif typ == 'success' %}✅{% else %}ℹ️{% endif %} {{ title }}
+            {% set st = state_attr(entity, 'item_' ~ i ~ '_start_time') %}
+            {% set et = state_attr(entity, 'item_' ~ i ~ '_end_time') %}
+            {% if st not in [None, none, 'None', '', 'unknown', 'unavailable'] %}
+              {% set s_dt = as_datetime(st).astimezone(now().tzinfo) %}
+              {{ s_dt.strftime('%d.%m.%y %H:%M') }}
+              {%- if et not in [None, none, 'None', '', 'unknown', 'unavailable'] %}
+                {% set e_dt = as_datetime(et).astimezone(now().tzinfo) %}
+                → {{ e_dt.strftime('%d.%m.%y %H:%M') }}
+              {%- endif %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
       icon: |-
         {% set typ = state_attr(entity, 'item_0_type') %}
         {% if typ == 'maintenance' %}mdi:wrench-clock
         {% elif typ == 'warning' %}mdi:alert
         {% else %}mdi:information-outline
         {% endif %}
-      badge_icon: ""
+      badge_icon: |-
+        {% set count = states(entity) | int(0) %}
+        {% if count >= 9 %}mdi:numeric-9-plus
+        {% elif count == 8 %}mdi:numeric-8
+        {% elif count == 7 %}mdi:numeric-7
+        {% elif count == 6 %}mdi:numeric-6
+        {% elif count == 5 %}mdi:numeric-5
+        {% elif count == 4 %}mdi:numeric-4
+        {% elif count == 3 %}mdi:numeric-3
+        {% elif count == 2 %}mdi:numeric-2
+        {% elif count == 1 %}mdi:numeric-1
+        {% endif %}
       badge_color: |-
         {% set typ = state_attr(entity, 'item_0_type') %}
         {% if typ == 'maintenance' %}amber
@@ -137,3 +149,6 @@ cards:
         {% else %}cyan
         {% endif %}
       multiline_secondary: true
+      tap_action:
+        action: url
+        url_path: https://openinfra.tech/de/?postcode=15746

@@ -60,44 +60,6 @@
       "detected_region": {
         "name": "Detected region"
       },
-      "planned_work_title": {
-        "name": "Planned work title"
-      },
-      "planned_work_description": {
-        "name": "Planned work description"
-      },
-      "planned_work_start": {
-        "name": "Planned work start"
-      },
-      "planned_work_end": {
-        "name": "Planned work end"
-      },
-      "planned_work_status": {
-        "name": "Planned work status",
-        "state": {
-          "scheduled": "Scheduled",
-          "active": "Active",
-          "completed": "Completed"
-        }
-      },
-      "error_message": {
-        "name": "Error message"
-      },
-      "latest_comment": {
-        "name": "Latest comment"
-      },
-      "latest_comment_time": {
-        "name": "Latest comment time"
-      },
-      "outage_start_time": {
-        "name": "Outage start time"
-      },
-      "outage_resolved_at": {
-        "name": "Outage resolved at"
-      },
-      "resolved_within_hours": {
-        "name": "Resolved within hours"
-      },
       "general_info": {
         "name": "General info"
       },

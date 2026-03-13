@@ -60,44 +60,6 @@
       "detected_region": {
         "name": "Erkannte Region"
       },
-      "planned_work_title": {
-        "name": "Wartungstitel"
-      },
-      "planned_work_description": {
-        "name": "Wartungsbeschreibung"
-      },
-      "planned_work_start": {
-        "name": "Wartungsbeginn"
-      },
-      "planned_work_end": {
-        "name": "Wartungsende"
-      },
-      "planned_work_status": {
-        "name": "Wartungsstatus",
-        "state": {
-          "scheduled": "Geplant",
-          "active": "Aktiv",
-          "completed": "Abgeschlossen"
-        }
-      },
-      "error_message": {
-        "name": "Fehlermeldung"
-      },
-      "latest_comment": {
-        "name": "Letzter Kommentar"
-      },
-      "latest_comment_time": {
-        "name": "Zeitpunkt letzter Kommentar"
-      },
-      "outage_start_time": {
-        "name": "Ausfall Beginn"
-      },
-      "outage_resolved_at": {
-        "name": "Ausfall behoben um"
-      },
-      "resolved_within_hours": {
-        "name": "Behoben innerhalb Stunden"
-      },
       "general_info": {
         "name": "Allgemeine Info"
       },
