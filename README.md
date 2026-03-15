@@ -2,11 +2,6 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 
-> **Breaking change in v2.0:** Entity IDs have changed. Old `sensor.*` entities for
-> network_status, planned_work, error, and disruption have been replaced with native
-> HA binary sensors and granular detail sensors. Please update your dashboards and
-> automations after upgrading — see [Migration](#migration-from-v1x-to-v20) below.
-
 Custom integration for [Home Assistant](https://www.home-assistant.io/) that monitors the network status of [OpenInfra](https://openinfra.tech).
 
 For more information about network status, visit the OpenInfra status page:
@@ -113,23 +108,6 @@ action:
     data:
       message: "OpenInfra disruption: {{ states('sensor.disruption_title') }}"
 ```
-
-## Migration from v1.x to v2.0
-
-v2.0 is a **breaking change**. The following old entities no longer exist:
-
-| Old entity (v1.x) | Replacement (v2.0) |
-|-------------------|--------------------|
-| `sensor.network_status` (free text) | `binary_sensor.network_connected` + `sensor.network_status` (ENUM) |
-| `sensor.planned_work` (title + attributes) | `binary_sensor.planned_work_active` + `sensor.planned_work_*` |
-| `sensor.error` (title + attributes) | `binary_sensor.error_active` + `sensor.error_title/description` |
-| `sensor.disruption` (title + attributes) | `binary_sensor.disruption_active` + `sensor.disruption_title/description` |
-
-**Steps to migrate:**
-1. Update the integration via HACS
-2. Restart Home Assistant
-3. Remove old entity references from dashboards and automations
-4. Add the new entity IDs listed above
 
 ## Development
 
