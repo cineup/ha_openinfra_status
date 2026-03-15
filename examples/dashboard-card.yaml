@@ -2,16 +2,16 @@
 #
 # Requires: custom:mushroom-template-card, custom:vertical-stack-in-card
 #
-# Entity-IDs are based on a German HA installation with postcode 15746.
+# Entity-IDs are based on a German HA installation with postcode YOUR_POSTCODE.
 # Adjust the entity IDs to match your setup:
-#   - Replace "15746" with your postcode
+#   - Replace "YOUR_POSTCODE" with your postcode
 #   - Check actual entity IDs in Settings → Devices → OpenInfra
 
 type: custom:vertical-stack-in-card
 cards:
   # ── Main status card ──────────────────────────────────────────────
   - type: custom:mushroom-template-card
-    entity: sensor.openinfra_15746_netzwerkstatus
+    entity: sensor.openinfra_YOUR_POSTCODE_netzwerkstatus
     primary: |
       {% set s = states(entity) %}
       {% if s == 'down' %}Netzwerkstörung
@@ -21,7 +21,7 @@ cards:
       {% else %}Unbekannt{% endif %}
     secondary: |
       {% set s = states(entity) %}
-      {% set resolved = is_state('binary_sensor.openinfra_15746_kurzlich_behoben', 'on') %}
+      {% set resolved = is_state('binary_sensor.openinfra_YOUR_POSTCODE_kurzlich_behoben', 'on') %}
       {% if s == 'down' %}
         {% set seit = state_attr(entity, 'outage_start_time') %}
         {% if seit not in [None, none, 'None', ''] %}
@@ -72,7 +72,7 @@ cards:
       {% endif %}
     badge_icon: |-
       {% set s = states(entity) %}
-      {% set resolved = is_state('binary_sensor.openinfra_15746_kurzlich_behoben', 'on') %}
+      {% set resolved = is_state('binary_sensor.openinfra_YOUR_POSTCODE_kurzlich_behoben', 'on') %}
       {% if s == 'down' %}mdi:alert
       {% elif s == 'up' and resolved %}mdi:check-circle
       {% elif s == 'up' %}mdi:check-bold
@@ -80,7 +80,7 @@ cards:
       {% endif %}
     badge_color: |-
       {% set s = states(entity) %}
-      {% set resolved = is_state('binary_sensor.openinfra_15746_kurzlich_behoben', 'on') %}
+      {% set resolved = is_state('binary_sensor.openinfra_YOUR_POSTCODE_kurzlich_behoben', 'on') %}
       {% if s == 'down' %}red
       {% elif s == 'maintenance' %}amber
       {% elif resolved %}blue
@@ -94,11 +94,11 @@ cards:
   # Badge shows the count (max 9). Tap opens the OpenInfra status page.
   - type: conditional
     conditions:
-      - entity: binary_sensor.openinfra_15746_allgemeine_info
+      - entity: binary_sensor.openinfra_YOUR_POSTCODE_allgemeine_info
         state: "on"
     card:
       type: custom:mushroom-template-card
-      entity: sensor.openinfra_15746_allgemeine_info
+      entity: sensor.openinfra_YOUR_POSTCODE_allgemeine_info
       primary: |
         {% set count = states(entity) | int(0) %}
         {% if count == 1 %}1 allgemeine Meldung
@@ -151,4 +151,4 @@ cards:
       multiline_secondary: true
       tap_action:
         action: url
-        url_path: https://openinfra.tech/de/?postcode=15746
+        url_path: https://openinfra.tech/de/?postcode=YOUR_POSTCODE
