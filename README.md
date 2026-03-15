@@ -2,11 +2,6 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 
-> **Breaking change in v2.0:** Entity IDs have changed. Old `sensor.*` entities for
-> network_status, planned_work, error, and disruption have been replaced with native
-> HA binary sensors and granular detail sensors. Please update your dashboards and
-> automations after upgrading — see [Migration](#migration-from-v1x-to-v20) below.
-
 Custom integration for [Home Assistant](https://www.home-assistant.io/) that monitors the network status of [OpenInfra](https://openinfra.tech).
 
 For more information about network status, visit the OpenInfra status page:
@@ -17,37 +12,30 @@ https://openinfra.tech
 - Query current network status for a location (country + postal code)
 - Automatic updates every 10 minutes
 - Native HA entity types with `device_class` — standard cards (Entities, Glance, Badges) work out of the box
-- 17 entities total: 4 binary sensors + 13 sensors
+- 11 entities total: 6 binary sensors + 5 sensors
 
 ## Entities
 
 ### Binary Sensors
 
-| Entity | device_class | Description |
-|--------|-------------|-------------|
-| `binary_sensor.network_connected` | `connectivity` | On when network status is `up`. Green/red icon in frontend. |
-| `binary_sensor.planned_work_active` | `problem` | On when a planned maintenance object is present. |
-| `binary_sensor.disruption_active` | `problem` | On when a disruption is active (`is_down` is truthy). |
-| `binary_sensor.error_active` | `problem` | On when an error object is present. |
+| Entity | device_class | entity_category | Description |
+|--------|-------------|-----------------|-------------|
+| `binary_sensor.network_connected` | `connectivity` | — | On when network status is `up`. Green/red icon in frontend. |
+| `binary_sensor.planned_work_active` | `problem` | `diagnostic` | On when a planned maintenance object is present. |
+| `binary_sensor.disruption_active` | `problem` | `diagnostic` | On when a disruption is active. |
+| `binary_sensor.recently_resolved` | `problem` | `diagnostic` | On when an outage was recently resolved. |
+| `binary_sensor.error_active` | `problem` | `diagnostic` | On when an error is present. |
+| `binary_sensor.general_info_active` | `problem` | `diagnostic` | On when general info items are available. |
 
 ### Sensors
 
 | Entity | device_class | entity_category | Description |
 |--------|-------------|-----------------|-------------|
-| `sensor.network_status` | `enum` | — | Current network status: `up`, `down`, `maintenance`, `disruption` |
-| `sensor.last_update` | `timestamp` | — | Timestamp of the last successful API call |
-| `sensor.disruption_since` | `timestamp` | — | Timestamp since when a disruption has been active |
-| `sensor.country_code` | — | `diagnostic` | Country code returned by the API |
-| `sensor.detected_region` | — | `diagnostic` | Region detected by the API |
-| `sensor.planned_work_title` | — | `diagnostic` | Title of the active planned maintenance |
-| `sensor.planned_work_description` | — | `diagnostic` | Description of the active planned maintenance |
-| `sensor.planned_work_start` | `timestamp` | `diagnostic` | Start time of the planned maintenance |
-| `sensor.planned_work_end` | `timestamp` | `diagnostic` | End time of the planned maintenance |
-| `sensor.planned_work_status` | `enum` | `diagnostic` | Status of planned work: `upcoming`, `active`, `completed` |
-| `sensor.error_title` | — | `diagnostic` | Title of the current error |
-| `sensor.error_description` | — | `diagnostic` | Description of the current error |
-| `sensor.disruption_title` | — | `diagnostic` | Title of the current disruption |
-| `sensor.disruption_description` | — | `diagnostic` | Description of the current disruption |
+| `sensor.network_status` | `enum` | — | Current network status: `up`, `down`, `maintenance`, `disruption`. Details (planned work, disruption, error) are available as attributes. |
+| `sensor.last_update` | `timestamp` | — | Timestamp of the last successful API call. |
+| `sensor.general_info` | — | `diagnostic` | Number of active general info items. Item details available as attributes. |
+| `sensor.country_code` | — | `diagnostic` | Country code returned by the API. |
+| `sensor.detected_region` | — | `diagnostic` | Region detected by the API. |
 
 > Diagnostic entities are hidden from standard dashboards by default but remain
 > available for automations and developer tools.
@@ -113,23 +101,6 @@ action:
     data:
       message: "OpenInfra disruption: {{ states('sensor.disruption_title') }}"
 ```
-
-## Migration from v1.x to v2.0
-
-v2.0 is a **breaking change**. The following old entities no longer exist:
-
-| Old entity (v1.x) | Replacement (v2.0) |
-|-------------------|--------------------|
-| `sensor.network_status` (free text) | `binary_sensor.network_connected` + `sensor.network_status` (ENUM) |
-| `sensor.planned_work` (title + attributes) | `binary_sensor.planned_work_active` + `sensor.planned_work_*` |
-| `sensor.error` (title + attributes) | `binary_sensor.error_active` + `sensor.error_title/description` |
-| `sensor.disruption` (title + attributes) | `binary_sensor.disruption_active` + `sensor.disruption_title/description` |
-
-**Steps to migrate:**
-1. Update the integration via HACS
-2. Restart Home Assistant
-3. Remove old entity references from dashboards and automations
-4. Add the new entity IDs listed above
 
 ## Development
 
