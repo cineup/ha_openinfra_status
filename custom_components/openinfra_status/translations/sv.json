@@ -51,7 +51,8 @@
           "up": "Tillg\u00e4nglig",
           "down": "Ej tillg\u00e4nglig",
           "maintenance": "Underh\u00e5ll",
-          "disruption": "Driftsst\u00f6rning"
+          "disruption": "Driftsst\u00f6rning",
+          "recently_resolved": "Nyligen l\u00f6st"
         }
       },
       "country_code": {

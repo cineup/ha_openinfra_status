@@ -37,7 +37,7 @@ DEFAULT_SCAN_INTERVAL_MINUTES = 10
 #   ─────────────────────────────────────────────────────────────────────
 #   success           bool      true                Indicates a valid response
 #   error             bool      false               Always boolean (see below)
-#   network_status    string    "up"                Known value: "up"
+#   network_status    string    "up"                Known values: "up", "recently_resolved"
 #   is_down           bool      false               Always boolean (see below)
 #   is_planned_work   bool      false               Boolean flag
 #   country_code      string    "DE"                Uppercase country code

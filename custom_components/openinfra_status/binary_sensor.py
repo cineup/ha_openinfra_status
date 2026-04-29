@@ -33,8 +33,8 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[OpenInfraBinarySensorEntityDescription, ...] =
         key="network_connected",
         translation_key="network_connected",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
-        # CONFIRMED: "network_status" exists, value "up" observed.
-        value_fn=lambda data: data.get("network_status") == "up",
+        # CONFIRMED: "up" and "recently_resolved" both mean the network is working.
+        value_fn=lambda data: data.get("network_status") in ("up", "recently_resolved"),
     ),
     OpenInfraBinarySensorEntityDescription(
         key="planned_work_active",

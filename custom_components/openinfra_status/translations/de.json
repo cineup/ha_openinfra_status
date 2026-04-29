@@ -51,7 +51,8 @@
           "up": "Verf\u00fcgbar",
           "down": "Nicht verf\u00fcgbar",
           "maintenance": "Wartung",
-          "disruption": "St\u00f6rung"
+          "disruption": "St\u00f6rung",
+          "recently_resolved": "K\u00fcrzlich behoben"
         }
       },
       "country_code": {

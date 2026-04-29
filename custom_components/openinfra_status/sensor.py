@@ -144,7 +144,7 @@ SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
         key="network_status",
         translation_key="network_status",
         device_class=SensorDeviceClass.ENUM,
-        options=["up", "down", "maintenance", "disruption"],
+        options=["up", "down", "maintenance", "disruption", "recently_resolved"],
         value_fn=lambda data, _coord: data.get("network_status"),
     ),
     # --- Context / diagnostic ---
