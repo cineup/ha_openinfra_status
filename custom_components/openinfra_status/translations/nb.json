@@ -51,7 +51,8 @@
           "up": "Tilgjengelig",
           "down": "Ikke tilgjengelig",
           "maintenance": "Vedlikehold",
-          "disruption": "Driftsforstyrrelse"
+          "disruption": "Driftsforstyrrelse",
+          "recently_resolved": "Nylig løst"
         }
       },
       "country_code": {

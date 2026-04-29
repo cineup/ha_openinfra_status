@@ -51,7 +51,8 @@
           "up": "Up",
           "down": "Down",
           "maintenance": "Maintenance",
-          "disruption": "Disruption"
+          "disruption": "Disruption",
+          "recently_resolved": "Recently resolved"
         }
       },
       "country_code": {
