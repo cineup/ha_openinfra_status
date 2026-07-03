@@ -1,5 +1,13 @@
 # OpenInfra Status — Dashboard Card (Mushroom)
 #
+# NOTE: The integration now ships its own built-in card that needs no extra
+# dependencies and is auto-registered:
+#
+#     type: custom:openinfra-status-card
+#     entity: sensor.openinfra_YOUR_POSTCODE_netzwerkstatus
+#
+# The template below remains as a dependency-based alternative.
+#
 # Requires: custom:mushroom-template-card, custom:vertical-stack-in-card
 #
 # Entity-IDs are based on a German HA installation with postcode YOUR_POSTCODE.

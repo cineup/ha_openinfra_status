@@ -75,9 +75,33 @@ Two inputs are required during setup:
 - **Country** – Select from the supported countries (de, no, se, uk, us)
 - **Postal code** – Your postal code to check local network status
 
-## Example Dashboard
+## Custom Card
 
-Use the binary sensors directly in an **Entities Card** or **Glance Card** — no custom card needed:
+The integration ships with its own Lovelace card and registers it automatically —
+no HACS frontend resource, no Mushroom, no manual resource setup required. After
+installing/restarting, add a card and pick **OpenInfra Status Card**, or use YAML:
+
+```yaml
+type: custom:openinfra-status-card
+entity: sensor.openinfra_YOUR_POSTCODE_netzwerkstatus
+```
+
+Only the `network_status` sensor is required. The card auto-discovers the
+related entities (disruption, planned work, recently resolved, error, general
+info) from the same device, so it is language-independent. It shows a single,
+correct status derived from the binary sensors — with precedence
+`error → disruption → planned work → recently resolved → up` — plus disruption
+duration and latest comment, planned-work window, and any general info items.
+
+> If auto-discovery ever needs overriding, the following optional config keys
+> accept explicit entity IDs: `disruption_entity`, `planned_work_entity`,
+> `recently_resolved_entity`, `error_entity`, `general_info_entity`,
+> `general_info_binary_entity`.
+
+## Example Dashboard (built-in cards)
+
+You can also use the binary sensors directly in an **Entities Card** or
+**Glance Card** — no custom card needed:
 
 ```yaml
 type: glance
@@ -99,7 +123,7 @@ trigger:
 action:
   - service: notify.mobile_app
     data:
-      message: "OpenInfra disruption: {{ states('sensor.disruption_title') }}"
+      message: "OpenInfra disruption: {{ state_attr('sensor.network_status', 'latest_comment') }}"
 ```
 
 ## Development
