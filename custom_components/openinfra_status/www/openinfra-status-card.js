@@ -32,6 +32,7 @@ const ROLE_BY_TRANSLATION_KEY = {
 const LABELS = {
   en: {
     error: "Error",
+    outage: "Network outage",
     disruption: "Network disruption",
     maintenance: "Planned maintenance",
     resolved: "Disruption resolved",
@@ -45,6 +46,7 @@ const LABELS = {
   },
   de: {
     error: "Fehler",
+    outage: "Netzwerk ausgefallen",
     disruption: "Netzwerkstörung",
     maintenance: "Geplante Wartung",
     resolved: "Störung behoben",
@@ -58,6 +60,7 @@ const LABELS = {
   },
   sv: {
     error: "Fel",
+    outage: "Nätverksavbrott",
     disruption: "Nätverksstörning",
     maintenance: "Planerat underhåll",
     resolved: "Störning åtgärdad",
@@ -71,6 +74,7 @@ const LABELS = {
   },
   nb: {
     error: "Feil",
+    outage: "Nettverk nede",
     disruption: "Nettverksforstyrrelse",
     maintenance: "Planlagt vedlikehold",
     resolved: "Feil rettet",
@@ -87,8 +91,8 @@ const LABELS = {
 // Primary-label key + icon + color per enum state. Colors use theme variables.
 const STATE_STYLE = {
   up: { label: "ok", icon: "mdi:check-bold", color: "var(--success-color, #43a047)" },
-  down: { label: "disruption", icon: "mdi:network-off", color: "var(--error-color, #db4437)" },
-  disruption: { label: "disruption", icon: "mdi:network-off", color: "var(--error-color, #db4437)" },
+  down: { label: "outage", icon: "mdi:network-off", color: "var(--error-color, #db4437)" },
+  disruption: { label: "disruption", icon: "mdi:network-strength-alert", color: "var(--warning-color, #ffa600)" },
   maintenance: { label: "maintenance", icon: "mdi:wrench-clock", color: "var(--warning-color, #ffa600)" },
   recently_resolved: { label: "resolved", icon: "mdi:check-circle", color: "var(--info-color, #039be5)" },
   unknown: { label: "unknown", icon: "mdi:help-circle", color: "var(--disabled-text-color, #9e9e9e)" },
@@ -226,12 +230,6 @@ class OpenInfraStatusCard extends HTMLElement {
     const t = this._t;
     const base = t[STATE_STYLE[state].label];
 
-    if (state === "down") {
-      const start = parseApiDate(attrs.outage_start_time);
-      if (start) {
-        return `${this._duration(start)} · ${base} · ${t.since} ${this._fmtDateTime(start)}`;
-      }
-    }
     if (state === "recently_resolved") {
       const resolvedAt = parseApiDate(attrs.outage_resolved_at);
       if (resolvedAt) {
@@ -263,8 +261,15 @@ class OpenInfraStatusCard extends HTMLElement {
       return parts.join("<br>");
     }
 
-    // down / disruption / recently_resolved: latest update + comment
+    // down / disruption / recently_resolved: latest update + comment.
+    // down additionally leads with outage duration + start time.
     if (state === "down" || state === "disruption" || state === "recently_resolved") {
+      if (state === "down") {
+        const start = parseApiDate(attrs.outage_start_time);
+        if (start) {
+          parts.push(`${this._duration(start)} · ${t.since} ${this._fmtDateTime(start)}`);
+        }
+      }
       const commentTime = parseApiDate(attrs.latest_comment_time);
       if (commentTime) {
         parts.push(`${t.update} ${this._fmtTime(commentTime)}`);
