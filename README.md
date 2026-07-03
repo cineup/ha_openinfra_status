@@ -93,10 +93,14 @@ correct status derived from the binary sensors — with precedence
 `error → disruption → planned work → recently resolved → up` — plus disruption
 duration and latest comment, planned-work window, and any general info items.
 
+The card links to your local status page at
+`https://openinfra.tech/<country>/?postcode=<postcode>`; country and postcode are
+derived automatically from the device, and can be overridden with the optional
+`country` and `postcode` config keys.
+
 > If auto-discovery ever needs overriding, the following optional config keys
-> accept explicit entity IDs: `disruption_entity`, `planned_work_entity`,
-> `recently_resolved_entity`, `error_entity`, `general_info_entity`,
-> `general_info_binary_entity`.
+> accept explicit entity IDs: `general_info_entity`, `general_info_binary_entity`,
+> `country_code_entity`.
 
 ## Example Dashboard (built-in cards)
 

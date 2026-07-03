@@ -331,23 +331,39 @@ class OpenInfraStatusCard extends HTMLElement {
       </div>`;
   }
 
+  // Build https://openinfra.tech/<country>/?postcode=<postcode>.
+  // Postcode: config → device name ("OpenInfra <postcode>") → entity_id slug.
+  // Country: config → country_code sensor (lowercased) → UI language.
   _openInfraUrl(related) {
-    let postcode = "";
+    const cfg = this._config;
     const hass = this._hass;
-    const mainReg = (hass.entities || {})[this._config.entity];
-    const deviceId = mainReg && mainReg.device_id;
-    const device = deviceId && hass.devices ? hass.devices[deviceId] : null;
-    const deviceName = device && (device.name_by_user || device.name);
-    if (deviceName) {
-      const m = String(deviceName).match(/OpenInfra\s+(.+)$/i);
-      if (m) postcode = m[1].trim();
+
+    let postcode = isEmpty(cfg.postcode) ? "" : String(cfg.postcode).trim();
+    if (!postcode) {
+      const mainReg = (hass.entities || {})[cfg.entity];
+      const deviceId = mainReg && mainReg.device_id;
+      const device = deviceId && hass.devices ? hass.devices[deviceId] : null;
+      const deviceName = device && (device.name_by_user || device.name);
+      if (deviceName) {
+        const m = String(deviceName).match(/OpenInfra\s+(.+)$/i);
+        if (m) postcode = m[1].trim();
+      }
     }
-    let lang = this._lang;
-    const countryId = related.country_code;
-    if (countryId && hass.states[countryId] && !isEmpty(hass.states[countryId].state)) {
-      lang = String(hass.states[countryId].state).toLowerCase();
+    if (!postcode) {
+      const objectId = (cfg.entity.split(".")[1] || "");
+      const m = objectId.match(/^openinfra_(.+)_[^_]+$/);
+      if (m) postcode = m[1].replace(/_/g, " ");
     }
-    const base = `${STATUS_URL}/${lang}/`;
+
+    let country = isEmpty(cfg.country) ? "" : String(cfg.country).toLowerCase();
+    if (!country) {
+      const countryId = related.country_code;
+      const cc = countryId && hass.states[countryId] && hass.states[countryId].state;
+      if (!isEmpty(cc)) country = String(cc).toLowerCase();
+    }
+    if (!country) country = this._lang;
+
+    const base = `${STATUS_URL}/${country}/`;
     return postcode ? `${base}?postcode=${encodeURIComponent(postcode)}` : base;
   }
 
