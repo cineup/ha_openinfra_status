@@ -8,9 +8,15 @@ jobs:
   validate-hacs:
     name: HACS Validation
     runs-on: ubuntu-latest
+    # The HACS action resolves the repository by its real branch commit, which
+    # only exists on push events. On pull_request it validates the ephemeral
+    # merge ref (pull/N/merge) whose commit is on no branch, so it reports
+    # "branch removed / structure not compliant". The push run on the same
+    # commits already validates HACS, so skip this job on pull requests.
+    if: github.event_name != 'pull_request'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: HACS Validation
         uses: hacs/action@main
@@ -23,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Hassfest Validation
         uses: home-assistant/actions/hassfest@master
