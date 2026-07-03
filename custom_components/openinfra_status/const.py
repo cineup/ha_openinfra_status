@@ -15,7 +15,7 @@ DEFAULT_SCAN_INTERVAL_MINUTES = 10
 CARD_FILENAME = "openinfra-status-card.js"
 CARD_URL_PATH = "/openinfra_status_frontend/openinfra-status-card.js"
 # Bump to bust the browser cache when the card JS changes.
-CARD_VERSION = "1.1.0"
+CARD_VERSION = "1.1.1"
 
 # ---------------------------------------------------------------------------
 # OpenInfra API field reference
