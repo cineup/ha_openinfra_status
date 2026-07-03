@@ -237,15 +237,21 @@ class OpenInfraStatusCard extends HTMLElement {
     }
 
     if (state === "maintenance") {
+      // Same time+text pattern as down/disruption/recently_resolved below:
+      // a bold time span, a " · " separator, then the descriptive text.
       const start = parseApiDate(attrs.planned_work_start);
       const end = parseApiDate(attrs.planned_work_end);
+      const hasTitle = !isEmpty(attrs.planned_work_title);
+      let timeText = "";
       if (start) {
-        let line = this._fmtDateTime(start);
-        if (end) line += ` → ${this._fmtTime(end)}`;
-        parts.push(this._line(line));
+        timeText = this._fmtDateTime(start);
+        if (end) timeText += ` → ${this._fmtTime(end)}`;
       }
-      if (!isEmpty(attrs.planned_work_title)) {
-        parts.push(this._line(this._escape(attrs.planned_work_title)));
+      if (timeText || hasTitle) {
+        const upd = timeText ? `<span class="upd">${timeText}</span>` : "";
+        const text = hasTitle ? this._escape(attrs.planned_work_title) : "";
+        const sep = upd && text ? " · " : "";
+        parts.push(`<div class="comment">${upd}${sep}${text}</div>`);
       }
       return parts.join("");
     }
