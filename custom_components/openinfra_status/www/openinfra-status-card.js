@@ -93,7 +93,7 @@ const STATE_STYLE = {
   down: { label: "outage", baseIcon: "mdi:network-off", badgeIcon: "mdi:alert", color: "var(--error-color, #db4437)" },
   disruption: { label: "disruption", baseIcon: "mdi:network", badgeIcon: "mdi:alert", color: "var(--warning-color, #ffa600)" },
   maintenance: { label: "maintenance", baseIcon: "mdi:network", badgeIcon: "mdi:wrench-clock", color: "var(--warning-color, #ffa600)" },
-  recently_resolved: { label: "resolved", baseIcon: "mdi:network", badgeIcon: "mdi:check-circle", color: "var(--info-color, #039be5)" },
+  recently_resolved: { label: "resolved", baseIcon: "mdi:network", badgeIcon: "mdi:check-bold", color: "#1976d2" },
   unknown: { label: "unknown", baseIcon: "mdi:help-network-outline", badgeIcon: null, color: "var(--disabled-text-color, #9e9e9e)" },
 };
 
@@ -422,22 +422,22 @@ class OpenInfraStatusCard extends HTMLElement {
         .icon-wrap {
           position: relative;
           flex: 0 0 auto;
-          width: 42px;
-          height: 42px;
+          width: 34px;
+          height: 34px;
           display: flex;
           align-items: center;
           justify-content: center;
         }
         .base-icon {
-          --mdc-icon-size: 40px;
+          --mdc-icon-size: 24px;
           color: var(--primary-text-color);
         }
         .badge {
           position: absolute;
-          right: -2px;
-          top: -2px;
-          width: 18px;
-          height: 18px;
+          right: -1px;
+          top: -1px;
+          width: 16px;
+          height: 16px;
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -446,7 +446,7 @@ class OpenInfraStatusCard extends HTMLElement {
           box-sizing: border-box;
         }
         .badge ha-icon {
-          --mdc-icon-size: 12px;
+          --mdc-icon-size: 10px;
           color: #fff;
         }
         .text { min-width: 0; flex: 1 1 auto; }
