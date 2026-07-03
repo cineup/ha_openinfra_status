@@ -229,12 +229,9 @@ class OpenInfraStatusCard extends HTMLElement {
     return `<div class="status-line">${text}</div>`;
   }
 
-  _linkLine() {
-    return `<a class="status-link" href="${this._escape(this._url)}" target="_blank" rel="noopener">openinfra.tech ↗</a>`;
-  }
-
-  // Build the secondary block as structured elements (timing / update / comment
-  // / link) rather than a <br>-joined string, so the comment can be clamped.
+  // Build the secondary block as structured elements (timing line + a combined
+  // update/comment block) rather than a <br>-joined string, so the comment can
+  // be clamped. The status-site link lives in the card's top-right corner.
   _secondaryHtml(state, attrs) {
     const t = this._t;
     const parts = [];
@@ -254,7 +251,6 @@ class OpenInfraStatusCard extends HTMLElement {
         if (end) line += ` → ${this._fmtTime(end)}`;
         parts.push(this._line(line));
       }
-      parts.push(this._linkLine());
       return parts.join("");
     }
 
@@ -271,14 +267,18 @@ class OpenInfraStatusCard extends HTMLElement {
           parts.push(this._line(`${t.since} ${this._fmtDateTime(resolvedAt)}`));
         }
       }
+      // Update time and comment share one line to stay compact; the whole
+      // block is clamped to two lines via CSS.
       const commentTime = parseApiDate(attrs.latest_comment_time);
-      if (commentTime) {
-        parts.push(this._line(`${t.update} ${this._fmtTime(commentTime)}`));
+      const hasComment = !isEmpty(attrs.latest_comment);
+      if (commentTime || hasComment) {
+        const upd = commentTime
+          ? `<span class="upd">${t.update}: ${this._fmtTime(commentTime)}</span>`
+          : "";
+        const text = hasComment ? this._escape(attrs.latest_comment) : "";
+        const sep = upd && text ? " " : "";
+        parts.push(`<div class="comment">${upd}${sep}${text}</div>`);
       }
-      if (!isEmpty(attrs.latest_comment)) {
-        parts.push(`<div class="comment">${this._escape(attrs.latest_comment)}</div>`);
-      }
-      parts.push(this._linkLine());
     }
     return parts.join("");
   }
@@ -412,11 +412,11 @@ class OpenInfraStatusCard extends HTMLElement {
 
     this.shadowRoot.innerHTML = `
       <style>
-        ha-card { padding: 12px 16px; }
+        ha-card { position: relative; padding: var(--spacing, 12px); }
         .row {
           display: flex;
-          align-items: center;
-          gap: 14px;
+          align-items: flex-start;
+          gap: var(--spacing, 12px);
           cursor: pointer;
         }
         .icon-wrap {
@@ -435,9 +435,9 @@ class OpenInfraStatusCard extends HTMLElement {
         .badge {
           position: absolute;
           right: -2px;
-          bottom: -2px;
-          width: 20px;
-          height: 20px;
+          top: -2px;
+          width: 18px;
+          height: 18px;
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -446,22 +446,26 @@ class OpenInfraStatusCard extends HTMLElement {
           box-sizing: border-box;
         }
         .badge ha-icon {
-          --mdc-icon-size: 13px;
+          --mdc-icon-size: 12px;
           color: #fff;
         }
         .text { min-width: 0; flex: 1 1 auto; }
         .primary {
-          font-weight: 600;
-          font-size: 1.05rem;
+          font-weight: var(--card-primary-font-weight, bold);
+          font-size: var(--card-primary-font-size, 14px);
+          line-height: var(--card-primary-line-height, 1.4);
           color: var(--primary-text-color);
+          padding-right: 22px;
         }
         .secondary {
           margin-top: 2px;
-          font-size: 0.9rem;
-          line-height: 1.3;
+          font-size: var(--card-secondary-font-size, 12px);
+          font-weight: var(--card-secondary-font-weight, normal);
+          line-height: var(--card-secondary-line-height, 1.4);
           color: var(--secondary-text-color);
         }
         .status-line { word-break: break-word; }
+        .upd { color: var(--primary-text-color); }
         .comment {
           display: -webkit-box;
           -webkit-line-clamp: 2;
@@ -470,14 +474,16 @@ class OpenInfraStatusCard extends HTMLElement {
           overflow: hidden;
           word-break: break-word;
         }
-        .status-link {
-          display: inline-block;
-          margin-top: 3px;
-          color: var(--primary-color, #039be5);
-          text-decoration: none;
-          font-size: 0.85rem;
+        .url-badge {
+          position: absolute;
+          top: var(--spacing, 12px);
+          right: var(--spacing, 12px);
+          color: var(--secondary-text-color);
+          --mdc-icon-size: 18px;
+          cursor: pointer;
+          opacity: 0.7;
         }
-        .status-link:hover { text-decoration: underline; }
+        .url-badge:hover { opacity: 1; }
         .divider {
           height: 1px;
           background: var(--divider-color, rgba(0,0,0,0.12));
@@ -509,6 +515,7 @@ class OpenInfraStatusCard extends HTMLElement {
         .warn { padding: 12px; color: var(--error-color, #db4437); }
       </style>
       <ha-card>
+        <ha-icon class="url-badge" data-action="open-url" icon="mdi:open-in-new" title="openinfra.tech"></ha-icon>
         <div class="row" data-action="more-info">
           <div class="icon-wrap">
             <ha-icon class="base-icon" icon="${style.baseIcon}"></ha-icon>
@@ -526,17 +533,14 @@ class OpenInfraStatusCard extends HTMLElement {
     if (moreInfoEl) {
       moreInfoEl.addEventListener("click", () => this._fireMoreInfo());
     }
-    // Let the status link open the site without triggering the more-info dialog.
-    this.shadowRoot.querySelectorAll(".status-link").forEach((el) => {
-      el.addEventListener("click", (ev) => ev.stopPropagation());
-    });
-    const urlEl = this.shadowRoot.querySelector('[data-action="open-url"]');
-    if (urlEl) {
-      urlEl.addEventListener("click", (ev) => {
+    // The corner symbol and the general-info section open the status site
+    // without triggering the more-info dialog.
+    this.shadowRoot.querySelectorAll('[data-action="open-url"]').forEach((el) => {
+      el.addEventListener("click", (ev) => {
         ev.stopPropagation();
         window.open(this._url, "_blank", "noopener");
       });
-    }
+    });
   }
 }
 
