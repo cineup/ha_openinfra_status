@@ -20,8 +20,6 @@ const CARD_VERSION = "1.0.0";
 
 const STATUS_URL = "https://openinfra.tech";
 
-const COMMENT_MAX = 120;
-
 // Auxiliary entities discovered from the same device via translation_key.
 const ROLE_BY_TRANSLATION_KEY = {
   general_info: "general_info",
@@ -88,14 +86,15 @@ const LABELS = {
   },
 };
 
-// Primary-label key + icon + color per enum state. Colors use theme variables.
+// Per enum state: primary-label key, base icon, corner badge icon, badge color.
+// The base icon stays a network device; the small badge carries the state color.
 const STATE_STYLE = {
-  up: { label: "ok", icon: "mdi:check-bold", color: "var(--success-color, #43a047)" },
-  down: { label: "outage", icon: "mdi:network-off", color: "var(--error-color, #db4437)" },
-  disruption: { label: "disruption", icon: "mdi:network-strength-alert", color: "var(--warning-color, #ffa600)" },
-  maintenance: { label: "maintenance", icon: "mdi:wrench-clock", color: "var(--warning-color, #ffa600)" },
-  recently_resolved: { label: "resolved", icon: "mdi:check-circle", color: "var(--info-color, #039be5)" },
-  unknown: { label: "unknown", icon: "mdi:help-circle", color: "var(--disabled-text-color, #9e9e9e)" },
+  up: { label: "ok", baseIcon: "mdi:network", badgeIcon: "mdi:check", color: "var(--success-color, #43a047)" },
+  down: { label: "outage", baseIcon: "mdi:network-off", badgeIcon: "mdi:alert", color: "var(--error-color, #db4437)" },
+  disruption: { label: "disruption", baseIcon: "mdi:network", badgeIcon: "mdi:alert", color: "var(--warning-color, #ffa600)" },
+  maintenance: { label: "maintenance", baseIcon: "mdi:network", badgeIcon: "mdi:wrench-clock", color: "var(--warning-color, #ffa600)" },
+  recently_resolved: { label: "resolved", baseIcon: "mdi:network", badgeIcon: "mdi:check-circle", color: "var(--info-color, #039be5)" },
+  unknown: { label: "unknown", baseIcon: "mdi:help-network-outline", badgeIcon: null, color: "var(--disabled-text-color, #9e9e9e)" },
 };
 
 const UNAVAILABLE = ["unknown", "unavailable", "none", ""];
@@ -193,11 +192,6 @@ class OpenInfraStatusCard extends HTMLElement {
     return `${h}:${String(m).padStart(2, "0")} h`;
   }
 
-  _comment(text) {
-    const c = String(text);
-    return this._escape(c.length > COMMENT_MAX ? c.slice(0, COMMENT_MAX) + "…" : c);
-  }
-
   // Resolve auxiliary entity ids from the same device via translation_key.
   _relatedEntities() {
     const cfg = this._config;
@@ -226,59 +220,67 @@ class OpenInfraStatusCard extends HTMLElement {
     return STATE_STYLE[ns] ? ns : "unknown";
   }
 
-  _primary(state, attrs) {
-    const t = this._t;
-    const base = t[STATE_STYLE[state].label];
-
-    if (state === "recently_resolved") {
-      const resolvedAt = parseApiDate(attrs.outage_resolved_at);
-      if (resolvedAt) {
-        return `${base} · ${t.since} ${this._fmtDateTime(resolvedAt)}`;
-      }
-    }
-    return base;
+  _primary(state) {
+    // Variant A: the title is always just the state label; timing goes below.
+    return this._t[STATE_STYLE[state].label];
   }
 
+  _line(text) {
+    return `<div class="status-line">${text}</div>`;
+  }
+
+  _linkLine() {
+    return `<a class="status-link" href="${this._escape(this._url)}" target="_blank" rel="noopener">openinfra.tech ↗</a>`;
+  }
+
+  // Build the secondary block as structured elements (timing / update / comment
+  // / link) rather than a <br>-joined string, so the comment can be clamped.
   _secondaryHtml(state, attrs) {
     const t = this._t;
     const parts = [];
 
     if (state === "up") {
-      return t.ok_secondary;
+      return this._line(t.ok_secondary);
     }
 
     if (state === "maintenance") {
       if (!isEmpty(attrs.planned_work_title)) {
-        parts.push(this._escape(attrs.planned_work_title));
+        parts.push(this._line(this._escape(attrs.planned_work_title)));
       }
       const start = parseApiDate(attrs.planned_work_start);
       const end = parseApiDate(attrs.planned_work_end);
       if (start) {
         let line = this._fmtDateTime(start);
         if (end) line += ` → ${this._fmtTime(end)}`;
-        parts.push(line);
+        parts.push(this._line(line));
       }
-      return parts.join("<br>");
+      parts.push(this._linkLine());
+      return parts.join("");
     }
 
-    // down / disruption / recently_resolved: latest update + comment.
-    // down additionally leads with outage duration + start time.
     if (state === "down" || state === "disruption" || state === "recently_resolved") {
+      // Timing line: down → "seit <start> · <duration>", resolved → "seit <end>".
       if (state === "down") {
         const start = parseApiDate(attrs.outage_start_time);
         if (start) {
-          parts.push(`${this._duration(start)} · ${t.since} ${this._fmtDateTime(start)}`);
+          parts.push(this._line(`${t.since} ${this._fmtDateTime(start)} · ${this._duration(start)}`));
+        }
+      } else if (state === "recently_resolved") {
+        const resolvedAt = parseApiDate(attrs.outage_resolved_at);
+        if (resolvedAt) {
+          parts.push(this._line(`${t.since} ${this._fmtDateTime(resolvedAt)}`));
         }
       }
       const commentTime = parseApiDate(attrs.latest_comment_time);
       if (commentTime) {
-        parts.push(`${t.update} ${this._fmtTime(commentTime)}`);
+        parts.push(this._line(`${t.update} ${this._fmtTime(commentTime)}`));
       }
       if (!isEmpty(attrs.latest_comment)) {
-        parts.push(this._comment(attrs.latest_comment));
+        parts.push(`<div class="comment">${this._escape(attrs.latest_comment)}</div>`);
       }
+      parts.push(this._linkLine());
     }
-    return parts.join("<br>");
+    return parts.join("");
   }
 
   _generalInfoHtml(related) {
@@ -382,10 +384,15 @@ class OpenInfraStatusCard extends HTMLElement {
     const style = STATE_STYLE[state];
     const attrs = main.attributes || {};
 
-    const primary = this._primary(state, attrs);
+    // URL must be set before building the secondary block (it renders the link).
+    this._url = this._openInfraUrl(related);
+    const primary = this._primary(state);
     const secondary = this._secondaryHtml(state, attrs);
     const general = this._generalInfoHtml(related);
-    this._url = this._openInfraUrl(related);
+
+    const badge = style.badgeIcon
+      ? `<span class="badge" style="background:${style.color}"><ha-icon icon="${style.badgeIcon}"></ha-icon></span>`
+      : "";
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -397,17 +404,33 @@ class OpenInfraStatusCard extends HTMLElement {
           cursor: pointer;
         }
         .icon-wrap {
+          position: relative;
           flex: 0 0 auto;
           width: 42px;
           height: 42px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .base-icon {
+          --mdc-icon-size: 40px;
+          color: var(--primary-text-color);
+        }
+        .badge {
+          position: absolute;
+          right: -2px;
+          bottom: -2px;
+          width: 20px;
+          height: 20px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: ${style.color};
+          border: 2px solid var(--card-background-color, #fff);
+          box-sizing: border-box;
         }
-        .icon-wrap ha-icon {
-          --mdc-icon-size: 24px;
+        .badge ha-icon {
+          --mdc-icon-size: 13px;
           color: #fff;
         }
         .text { min-width: 0; flex: 1 1 auto; }
@@ -421,8 +444,24 @@ class OpenInfraStatusCard extends HTMLElement {
           font-size: 0.9rem;
           line-height: 1.3;
           color: var(--secondary-text-color);
+        }
+        .status-line { word-break: break-word; }
+        .comment {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
           word-break: break-word;
         }
+        .status-link {
+          display: inline-block;
+          margin-top: 3px;
+          color: var(--primary-color, #039be5);
+          text-decoration: none;
+          font-size: 0.85rem;
+        }
+        .status-link:hover { text-decoration: underline; }
         .divider {
           height: 1px;
           background: var(--divider-color, rgba(0,0,0,0.12));
@@ -455,7 +494,10 @@ class OpenInfraStatusCard extends HTMLElement {
       </style>
       <ha-card>
         <div class="row" data-action="more-info">
-          <div class="icon-wrap"><ha-icon icon="${style.icon}"></ha-icon></div>
+          <div class="icon-wrap">
+            <ha-icon class="base-icon" icon="${style.baseIcon}"></ha-icon>
+            ${badge}
+          </div>
           <div class="text">
             <div class="primary">${this._escape(primary)}</div>
             ${secondary ? `<div class="secondary">${secondary}</div>` : ""}
@@ -468,6 +510,10 @@ class OpenInfraStatusCard extends HTMLElement {
     if (moreInfoEl) {
       moreInfoEl.addEventListener("click", () => this._fireMoreInfo());
     }
+    // Let the status link open the site without triggering the more-info dialog.
+    this.shadowRoot.querySelectorAll(".status-link").forEach((el) => {
+      el.addEventListener("click", (ev) => ev.stopPropagation());
+    });
     const urlEl = this.shadowRoot.querySelector('[data-action="open-url"]');
     if (urlEl) {
       urlEl.addEventListener("click", (ev) => {
