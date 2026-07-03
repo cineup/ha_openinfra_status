@@ -38,7 +38,6 @@ const LABELS = {
     unknown: "Unknown",
     ok_secondary: "No disruptions found in your area.",
     since: "since",
-    update: "Update",
     general_one: "1 general notice",
     general_many: "{n} general notices",
   },
@@ -52,7 +51,6 @@ const LABELS = {
     unknown: "Unbekannt",
     ok_secondary: "Keine Störungen in Ihrem Bereich gefunden.",
     since: "seit",
-    update: "Update",
     general_one: "1 allgemeine Meldung",
     general_many: "{n} allgemeine Meldungen",
   },
@@ -66,7 +64,6 @@ const LABELS = {
     unknown: "Okänt",
     ok_secondary: "Inga störningar hittades i ditt område.",
     since: "sedan",
-    update: "Uppdatering",
     general_one: "1 allmänt meddelande",
     general_many: "{n} allmänna meddelanden",
   },
@@ -80,7 +77,6 @@ const LABELS = {
     unknown: "Ukjent",
     ok_secondary: "Ingen forstyrrelser funnet i ditt område.",
     since: "siden",
-    update: "Oppdatering",
     general_one: "1 generell melding",
     general_many: "{n} generelle meldinger",
   },
@@ -241,15 +237,15 @@ class OpenInfraStatusCard extends HTMLElement {
     }
 
     if (state === "maintenance") {
-      if (!isEmpty(attrs.planned_work_title)) {
-        parts.push(this._line(this._escape(attrs.planned_work_title)));
-      }
       const start = parseApiDate(attrs.planned_work_start);
       const end = parseApiDate(attrs.planned_work_end);
       if (start) {
         let line = this._fmtDateTime(start);
         if (end) line += ` → ${this._fmtTime(end)}`;
         parts.push(this._line(line));
+      }
+      if (!isEmpty(attrs.planned_work_title)) {
+        parts.push(this._line(this._escape(attrs.planned_work_title)));
       }
       return parts.join("");
     }
@@ -273,10 +269,10 @@ class OpenInfraStatusCard extends HTMLElement {
       const hasComment = !isEmpty(attrs.latest_comment);
       if (commentTime || hasComment) {
         const upd = commentTime
-          ? `<span class="upd">${t.update}: ${this._fmtTime(commentTime)}</span>`
+          ? `<span class="upd">${this._fmtTime(commentTime)}</span>`
           : "";
         const text = hasComment ? this._escape(attrs.latest_comment) : "";
-        const sep = upd && text ? " " : "";
+        const sep = upd && text ? " · " : "";
         parts.push(`<div class="comment">${upd}${sep}${text}</div>`);
       }
     }
