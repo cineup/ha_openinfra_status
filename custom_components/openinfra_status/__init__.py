@@ -5,10 +5,12 @@ from __future__ import annotations
 import asyncio
 from datetime import timedelta
 import logging
+from pathlib import Path
 from typing import Any, TypeAlias
 
 import aiohttp
 
+from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
@@ -19,6 +21,9 @@ from .const import (
     API_GENERAL_URL,
     API_TIMEOUT,
     API_URL,
+    CARD_FILENAME,
+    CARD_URL_PATH,
+    CARD_VERSION,
     CONF_COUNTRY,
     CONF_POSTCODE,
     DEFAULT_SCAN_INTERVAL_MINUTES,
@@ -97,8 +102,31 @@ class OpenInfraDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return data
 
 
+async def _async_register_frontend(hass: HomeAssistant) -> None:
+    """Serve and register the custom Lovelace card (once per HA instance)."""
+    data = hass.data.setdefault(DOMAIN, {})
+    if data.get("frontend_registered"):
+        return
+
+    card_path = str(Path(__file__).parent / "www" / CARD_FILENAME)
+    try:
+        from homeassistant.components.http import StaticPathConfig
+
+        await hass.http.async_register_static_paths(
+            [StaticPathConfig(CARD_URL_PATH, card_path, False)]
+        )
+    except ImportError:
+        # Fallback for HA cores older than 2024.7.
+        hass.http.register_static_path(CARD_URL_PATH, card_path, False)
+
+    add_extra_js_url(hass, f"{CARD_URL_PATH}?v={CARD_VERSION}")
+    data["frontend_registered"] = True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: OpenInfraConfigEntry) -> bool:
     """Set up OpenInfra Status from a config entry."""
+    await _async_register_frontend(hass)
+
     coordinator = OpenInfraDataUpdateCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
 
