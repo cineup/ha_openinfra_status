@@ -444,11 +444,15 @@ class OpenInfraStatusCard extends HTMLElement {
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 2px solid var(--card-background-color, #fff);
           box-sizing: border-box;
         }
         .badge ha-icon {
           --mdc-icon-size: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 10px;
+          height: 10px;
           color: #fff;
         }
         .text { min-width: 0; flex: 1 1 auto; }
