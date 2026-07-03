@@ -38,7 +38,6 @@ const LABELS = {
     unknown: "Unknown",
     ok_secondary: "No disruptions found in your area.",
     since: "since",
-    update: "Update",
     general_one: "1 general notice",
     general_many: "{n} general notices",
   },
@@ -52,7 +51,6 @@ const LABELS = {
     unknown: "Unbekannt",
     ok_secondary: "Keine Störungen in Ihrem Bereich gefunden.",
     since: "seit",
-    update: "Update",
     general_one: "1 allgemeine Meldung",
     general_many: "{n} allgemeine Meldungen",
   },
@@ -66,7 +64,6 @@ const LABELS = {
     unknown: "Okänt",
     ok_secondary: "Inga störningar hittades i ditt område.",
     since: "sedan",
-    update: "Uppdatering",
     general_one: "1 allmänt meddelande",
     general_many: "{n} allmänna meddelanden",
   },
@@ -80,7 +77,6 @@ const LABELS = {
     unknown: "Ukjent",
     ok_secondary: "Ingen forstyrrelser funnet i ditt område.",
     since: "siden",
-    update: "Oppdatering",
     general_one: "1 generell melding",
     general_many: "{n} generelle meldinger",
   },
@@ -93,7 +89,7 @@ const STATE_STYLE = {
   down: { label: "outage", baseIcon: "mdi:network-off", badgeIcon: "mdi:alert", color: "var(--error-color, #db4437)" },
   disruption: { label: "disruption", baseIcon: "mdi:network", badgeIcon: "mdi:alert", color: "var(--warning-color, #ffa600)" },
   maintenance: { label: "maintenance", baseIcon: "mdi:network", badgeIcon: "mdi:wrench-clock", color: "var(--warning-color, #ffa600)" },
-  recently_resolved: { label: "resolved", baseIcon: "mdi:network", badgeIcon: "mdi:check-circle", color: "var(--info-color, #039be5)" },
+  recently_resolved: { label: "resolved", baseIcon: "mdi:network", badgeIcon: "mdi:check-bold", color: "#1976d2" },
   unknown: { label: "unknown", baseIcon: "mdi:help-network-outline", badgeIcon: null, color: "var(--disabled-text-color, #9e9e9e)" },
 };
 
@@ -241,15 +237,21 @@ class OpenInfraStatusCard extends HTMLElement {
     }
 
     if (state === "maintenance") {
-      if (!isEmpty(attrs.planned_work_title)) {
-        parts.push(this._line(this._escape(attrs.planned_work_title)));
-      }
+      // Same time+text pattern as down/disruption/recently_resolved below:
+      // a bold time span, a " · " separator, then the descriptive text.
       const start = parseApiDate(attrs.planned_work_start);
       const end = parseApiDate(attrs.planned_work_end);
+      const hasTitle = !isEmpty(attrs.planned_work_title);
+      let timeText = "";
       if (start) {
-        let line = this._fmtDateTime(start);
-        if (end) line += ` → ${this._fmtTime(end)}`;
-        parts.push(this._line(line));
+        timeText = this._fmtDateTime(start);
+        if (end) timeText += ` → ${this._fmtTime(end)}`;
+      }
+      if (timeText || hasTitle) {
+        const upd = timeText ? `<span class="upd">${timeText}</span>` : "";
+        const text = hasTitle ? this._escape(attrs.planned_work_title) : "";
+        const sep = upd && text ? " · " : "";
+        parts.push(`<div class="comment">${upd}${sep}${text}</div>`);
       }
       return parts.join("");
     }
@@ -273,10 +275,10 @@ class OpenInfraStatusCard extends HTMLElement {
       const hasComment = !isEmpty(attrs.latest_comment);
       if (commentTime || hasComment) {
         const upd = commentTime
-          ? `<span class="upd">${t.update}: ${this._fmtTime(commentTime)}</span>`
+          ? `<span class="upd">${this._fmtTime(commentTime)}</span>`
           : "";
         const text = hasComment ? this._escape(attrs.latest_comment) : "";
-        const sep = upd && text ? " " : "";
+        const sep = upd && text ? " · " : "";
         parts.push(`<div class="comment">${upd}${sep}${text}</div>`);
       }
     }
@@ -422,22 +424,22 @@ class OpenInfraStatusCard extends HTMLElement {
         .icon-wrap {
           position: relative;
           flex: 0 0 auto;
-          width: 42px;
-          height: 42px;
+          width: 34px;
+          height: 34px;
           display: flex;
           align-items: center;
           justify-content: center;
         }
         .base-icon {
-          --mdc-icon-size: 40px;
+          --mdc-icon-size: 24px;
           color: var(--primary-text-color);
         }
         .badge {
           position: absolute;
-          right: -2px;
-          top: -2px;
-          width: 18px;
-          height: 18px;
+          right: -1px;
+          top: -1px;
+          width: 16px;
+          height: 16px;
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -446,7 +448,7 @@ class OpenInfraStatusCard extends HTMLElement {
           box-sizing: border-box;
         }
         .badge ha-icon {
-          --mdc-icon-size: 12px;
+          --mdc-icon-size: 10px;
           color: #fff;
         }
         .text { min-width: 0; flex: 1 1 auto; }
