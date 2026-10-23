@@ -14,7 +14,9 @@ from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
@@ -33,6 +35,8 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR]
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 OpenInfraConfigEntry: TypeAlias = ConfigEntry
 
@@ -103,7 +107,11 @@ class OpenInfraDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
 
 async def _async_register_frontend(hass: HomeAssistant) -> None:
-    """Serve and register the custom Lovelace card (once per HA instance)."""
+    """Serve and register the custom Lovelace card (once per HA instance).
+
+    The URL is versioned via ?v=CARD_VERSION, so browser caching is safe and
+    keeps the card from loading too late for Lovelace on cold starts.
+    """
     data = hass.data.setdefault(DOMAIN, {})
     if data.get("frontend_registered"):
         return
@@ -113,14 +121,24 @@ async def _async_register_frontend(hass: HomeAssistant) -> None:
         from homeassistant.components.http import StaticPathConfig
 
         await hass.http.async_register_static_paths(
-            [StaticPathConfig(CARD_URL_PATH, card_path, False)]
+            [StaticPathConfig(CARD_URL_PATH, card_path, True)]
         )
     except ImportError:
         # Fallback for HA cores older than 2024.7.
-        hass.http.register_static_path(CARD_URL_PATH, card_path, False)
+        hass.http.register_static_path(CARD_URL_PATH, card_path, True)
 
     add_extra_js_url(hass, f"{CARD_URL_PATH}?v={CARD_VERSION}")
     data["frontend_registered"] = True
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register the card as early as possible, before any entry is set up.
+
+    Otherwise a frontend loaded during HA startup would miss the extra JS
+    module and show an error card until the next page reload.
+    """
+    await _async_register_frontend(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: OpenInfraConfigEntry) -> bool:

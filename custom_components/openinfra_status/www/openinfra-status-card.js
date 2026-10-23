@@ -16,7 +16,7 @@
  *   general_info_entity, general_info_binary_entity, country_code_entity
  */
 
-const CARD_VERSION = "1.0.0";
+const CARD_VERSION = "1.2.0";
 
 const STATUS_URL = "https://openinfra.tech";
 
@@ -111,10 +111,129 @@ function parseApiDate(value) {
   return isNaN(d.getTime()) ? null : d;
 }
 
+const CARD_STYLE = `
+  ha-card { position: relative; padding: var(--spacing, 12px); }
+  .row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing, 12px);
+    cursor: pointer;
+  }
+  .icon-wrap {
+    position: relative;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .base-icon {
+    --mdc-icon-size: 24px;
+    color: var(--primary-text-color);
+  }
+  .badge {
+    position: absolute;
+    right: -1px;
+    top: -1px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+  .badge ha-icon {
+    --mdc-icon-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 10px;
+    height: 10px;
+    color: #fff;
+  }
+  .text { min-width: 0; flex: 1 1 auto; }
+  .primary {
+    font-weight: var(--card-primary-font-weight, bold);
+    font-size: var(--card-primary-font-size, 14px);
+    line-height: var(--card-primary-line-height, 1.4);
+    color: var(--primary-text-color);
+    padding-right: 22px;
+  }
+  .secondary {
+    margin-top: 2px;
+    font-size: var(--card-secondary-font-size, 12px);
+    font-weight: var(--card-secondary-font-weight, normal);
+    line-height: var(--card-secondary-line-height, 1.4);
+    color: var(--secondary-text-color);
+  }
+  .status-line { word-break: break-word; }
+  .upd { color: var(--primary-text-color); }
+  .comment {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+  }
+  .url-badge {
+    position: absolute;
+    top: var(--spacing, 12px);
+    right: var(--spacing, 12px);
+    color: var(--secondary-text-color);
+    --mdc-icon-size: 18px;
+    cursor: pointer;
+    opacity: 0.7;
+  }
+  .url-badge:hover { opacity: 1; }
+  .divider {
+    height: 1px;
+    background: var(--divider-color, rgba(0,0,0,0.12));
+    margin: 12px 0;
+  }
+  .general {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    cursor: pointer;
+  }
+  .info-icon {
+    flex: 0 0 auto;
+    color: var(--info-color, #039be5);
+    --mdc-icon-size: 22px;
+    margin-top: 2px;
+  }
+  .general-heading {
+    font-weight: 600;
+    color: var(--primary-text-color);
+    margin-bottom: 4px;
+  }
+  .info-item {
+    font-size: 0.9rem;
+    line-height: 1.35;
+    color: var(--secondary-text-color);
+    word-break: break-word;
+  }
+  .warn { padding: 12px; color: var(--error-color, #db4437); }
+  .url-badge[hidden] { display: none; }
+`;
+
 class OpenInfraStatusCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    // Static skeleton, built once. Renders only swap the content container, so
+    // frequent hass updates never rebuild <ha-card> or re-attach listeners.
+    this.shadowRoot.innerHTML = `<style>${CARD_STYLE}</style>
+      <ha-card>
+        <ha-icon class="url-badge" data-action="open-url" icon="mdi:open-in-new" title="openinfra.tech"></ha-icon>
+        <div class="content"></div>
+      </ha-card>`;
+    this._content = this.shadowRoot.querySelector(".content");
+    this._urlBadge = this.shadowRoot.querySelector(".url-badge");
+    this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
   }
 
   setConfig(config) {
@@ -122,15 +241,46 @@ class OpenInfraStatusCard extends HTMLElement {
       throw new Error("Please define the 'entity' (network_status sensor).");
     }
     this._config = config;
+    this._related = null;
+    this._render();
   }
 
   set hass(hass) {
     this._hass = hass;
+    // HA pushes a new hass object on every state change of any entity; only
+    // re-render when something this card displays has actually changed.
+    const key = this._computeRenderKey();
+    if (key && this._renderKey && key.every((v, i) => v === this._renderKey[i])) return;
     this._render();
   }
 
   getCardSize() {
     return 3;
+  }
+
+  getGridOptions() {
+    return { columns: 6, min_columns: 4 };
+  }
+
+  // Values (compared by identity) that influence the rendered output. HA
+  // replaces a state object whenever that entity changes, and the registry
+  // objects whenever the registry changes.
+  _computeRenderKey() {
+    if (!this._hass || !this._config) return null;
+    const hass = this._hass;
+    const related = this._relatedEntities();
+    const main = hass.states[this._config.entity];
+    return [
+      hass.language,
+      hass.entities,
+      hass.devices,
+      main,
+      related.general_info && hass.states[related.general_info],
+      related.general_info_active && hass.states[related.general_info_active],
+      related.country_code && hass.states[related.country_code],
+      // The outage duration ticks with the clock.
+      main && main.state === "down" ? Math.floor(Date.now() / 60000) : 0,
+    ];
   }
 
   static getConfigElement() {
@@ -192,6 +342,10 @@ class OpenInfraStatusCard extends HTMLElement {
   _relatedEntities() {
     const cfg = this._config;
     const hass = this._hass;
+    // Cached per registry object; setConfig() clears it.
+    if (this._related && this._related.registry === hass.entities) {
+      return this._related.roles;
+    }
     const roles = {
       general_info: cfg.general_info_entity,
       general_info_active: cfg.general_info_binary_entity,
@@ -207,6 +361,7 @@ class OpenInfraStatusCard extends HTMLElement {
         if (role && !roles[role]) roles[role] = entityId;
       }
     }
+    this._related = { registry: hass.entities, roles };
     return roles;
   }
 
@@ -386,14 +541,26 @@ class OpenInfraStatusCard extends HTMLElement {
     );
   }
 
+  _onClick(ev) {
+    const el = ev.composedPath().find((n) => n.dataset && n.dataset.action);
+    if (!el) return;
+    if (el.dataset.action === "more-info") {
+      this._fireMoreInfo();
+    } else if (el.dataset.action === "open-url" && this._url) {
+      // The corner symbol and the general-info section open the status site
+      // without triggering the more-info dialog.
+      window.open(this._url, "_blank", "noopener");
+    }
+  }
+
   _render() {
     if (!this._hass || !this._config) return;
+    this._renderKey = this._computeRenderKey();
     const main = this._hass.states[this._config.entity];
     if (!main) {
-      this.shadowRoot.innerHTML = `
-        <ha-card>
-          <div class="warn">${this._escape(this._config.entity)} — unavailable</div>
-        </ha-card>`;
+      this._url = null;
+      this._urlBadge.hidden = true;
+      this._content.innerHTML = `<div class="warn">${this._escape(this._config.entity)} — unavailable</div>`;
       return;
     }
 
@@ -402,8 +569,8 @@ class OpenInfraStatusCard extends HTMLElement {
     const style = STATE_STYLE[state];
     const attrs = main.attributes || {};
 
-    // URL must be set before building the secondary block (it renders the link).
     this._url = this._openInfraUrl(related);
+    this._urlBadge.hidden = false;
     const primary = this._primary(state);
     const secondary = this._secondaryHtml(state, attrs);
     const general = this._generalInfoHtml(related);
@@ -412,141 +579,18 @@ class OpenInfraStatusCard extends HTMLElement {
       ? `<span class="badge" style="background:${style.color}"><ha-icon icon="${style.badgeIcon}"></ha-icon></span>`
       : "";
 
-    this.shadowRoot.innerHTML = `
-      <style>
-        ha-card { position: relative; padding: var(--spacing, 12px); }
-        .row {
-          display: flex;
-          align-items: flex-start;
-          gap: var(--spacing, 12px);
-          cursor: pointer;
-        }
-        .icon-wrap {
-          position: relative;
-          flex: 0 0 auto;
-          width: 34px;
-          height: 34px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .base-icon {
-          --mdc-icon-size: 24px;
-          color: var(--primary-text-color);
-        }
-        .badge {
-          position: absolute;
-          right: -1px;
-          top: -1px;
-          width: 16px;
-          height: 16px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-sizing: border-box;
-        }
-        .badge ha-icon {
-          --mdc-icon-size: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 10px;
-          height: 10px;
-          color: #fff;
-        }
-        .text { min-width: 0; flex: 1 1 auto; }
-        .primary {
-          font-weight: var(--card-primary-font-weight, bold);
-          font-size: var(--card-primary-font-size, 14px);
-          line-height: var(--card-primary-line-height, 1.4);
-          color: var(--primary-text-color);
-          padding-right: 22px;
-        }
-        .secondary {
-          margin-top: 2px;
-          font-size: var(--card-secondary-font-size, 12px);
-          font-weight: var(--card-secondary-font-weight, normal);
-          line-height: var(--card-secondary-line-height, 1.4);
-          color: var(--secondary-text-color);
-        }
-        .status-line { word-break: break-word; }
-        .upd { color: var(--primary-text-color); }
-        .comment {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-          word-break: break-word;
-        }
-        .url-badge {
-          position: absolute;
-          top: var(--spacing, 12px);
-          right: var(--spacing, 12px);
-          color: var(--secondary-text-color);
-          --mdc-icon-size: 18px;
-          cursor: pointer;
-          opacity: 0.7;
-        }
-        .url-badge:hover { opacity: 1; }
-        .divider {
-          height: 1px;
-          background: var(--divider-color, rgba(0,0,0,0.12));
-          margin: 12px 0;
-        }
-        .general {
-          display: flex;
-          gap: 14px;
-          align-items: flex-start;
-          cursor: pointer;
-        }
-        .info-icon {
-          flex: 0 0 auto;
-          color: var(--info-color, #039be5);
-          --mdc-icon-size: 22px;
-          margin-top: 2px;
-        }
-        .general-heading {
-          font-weight: 600;
-          color: var(--primary-text-color);
-          margin-bottom: 4px;
-        }
-        .info-item {
-          font-size: 0.9rem;
-          line-height: 1.35;
-          color: var(--secondary-text-color);
-          word-break: break-word;
-        }
-        .warn { padding: 12px; color: var(--error-color, #db4437); }
-      </style>
-      <ha-card>
-        <ha-icon class="url-badge" data-action="open-url" icon="mdi:open-in-new" title="openinfra.tech"></ha-icon>
-        <div class="row" data-action="more-info">
-          <div class="icon-wrap">
-            <ha-icon class="base-icon" icon="${style.baseIcon}"></ha-icon>
-            ${badge}
-          </div>
-          <div class="text">
-            <div class="primary">${this._escape(primary)}</div>
-            ${secondary ? `<div class="secondary">${secondary}</div>` : ""}
-          </div>
+    this._content.innerHTML = `
+      <div class="row" data-action="more-info">
+        <div class="icon-wrap">
+          <ha-icon class="base-icon" icon="${style.baseIcon}"></ha-icon>
+          ${badge}
         </div>
-        ${general}
-      </ha-card>`;
-
-    const moreInfoEl = this.shadowRoot.querySelector('[data-action="more-info"]');
-    if (moreInfoEl) {
-      moreInfoEl.addEventListener("click", () => this._fireMoreInfo());
-    }
-    // The corner symbol and the general-info section open the status site
-    // without triggering the more-info dialog.
-    this.shadowRoot.querySelectorAll('[data-action="open-url"]').forEach((el) => {
-      el.addEventListener("click", (ev) => {
-        ev.stopPropagation();
-        window.open(this._url, "_blank", "noopener");
-      });
-    });
+        <div class="text">
+          <div class="primary">${this._escape(primary)}</div>
+          ${secondary ? `<div class="secondary">${secondary}</div>` : ""}
+        </div>
+      </div>
+      ${general}`;
   }
 }
 
