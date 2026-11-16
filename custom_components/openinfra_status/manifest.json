@@ -1,6 +1,9 @@
 {
   "domain": "openinfra_status",
   "name": "OpenInfra Status",
+  "categories": [
+    "computers_network.monitoring"
+  ],
   "codeowners": [
     "@cineup"
   ],
