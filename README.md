@@ -52,7 +52,23 @@ https://openinfra.tech
 
 ## Installation
 
-### Via HACS (recommended)
+### Via Marketplace (Home Assistant 2026.11 and newer)
+
+Since 2026.11, HACS is built into Home Assistant as the **Marketplace**. A
+separate HACS install is no longer needed.
+
+1. Settings → **Marketplace** → add `https://github.com/cineup/ha_openinfra_status`
+   as a custom repository (type **Integration**). Adding custom repositories
+   requires the Marketplace to be connected to GitHub.
+2. Install "OpenInfra Status"
+3. **Restart Home Assistant**
+4. Settings → Devices & Services → **Add Integration** → "OpenInfra Status"
+5. Select your country and enter your postal code
+
+If you installed the integration via HACS before 2026.11, the update moves it
+to the Marketplace automatically. You don't need to reinstall it.
+
+### Via HACS (Home Assistant before 2026.11)
 
 1. Install [HACS](https://hacs.xyz/) in Home Assistant (if not already installed)
 2. In HACS: **Integrations** → Menu (three dots top right) → **Custom repositories**
@@ -135,3 +151,7 @@ action:
 This integration is a community project and has no official affiliation with OpenInfra.
 
 Bug reports and feature requests are welcome as [Issues](https://github.com/cineup/ha_openinfra_status/issues).
+
+## License
+
+[MIT](LICENSE)
