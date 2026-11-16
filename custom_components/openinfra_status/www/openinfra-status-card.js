@@ -16,7 +16,7 @@
  *   general_info_entity, general_info_binary_entity, country_code_entity
  */
 
-const CARD_VERSION = "1.2.0";
+const CARD_VERSION = "1.3.0";
 
 const STATUS_URL = "https://openinfra.tech";
 
@@ -40,6 +40,8 @@ const LABELS = {
     since: "since",
     general_one: "1 general notice",
     general_many: "{n} general notices",
+    updates_one: "+1 update",
+    updates_many: "+{n} updates",
   },
   de: {
     error: "Fehler",
@@ -53,6 +55,8 @@ const LABELS = {
     since: "seit",
     general_one: "1 allgemeine Meldung",
     general_many: "{n} allgemeine Meldungen",
+    updates_one: "+1 Update",
+    updates_many: "+{n} Updates",
   },
   sv: {
     error: "Fel",
@@ -66,6 +70,8 @@ const LABELS = {
     since: "sedan",
     general_one: "1 allmänt meddelande",
     general_many: "{n} allmänna meddelanden",
+    updates_one: "+1 uppdatering",
+    updates_many: "+{n} uppdateringar",
   },
   nb: {
     error: "Feil",
@@ -79,6 +85,8 @@ const LABELS = {
     since: "siden",
     general_one: "1 generell melding",
     general_many: "{n} generelle meldinger",
+    updates_one: "+1 oppdatering",
+    updates_many: "+{n} oppdateringer",
   },
 };
 
@@ -215,6 +223,11 @@ const CARD_STYLE = `
     line-height: 1.35;
     color: var(--secondary-text-color);
     word-break: break-word;
+  }
+  .updates {
+    font-size: 0.8rem;
+    opacity: 0.75;
+    white-space: nowrap;
   }
   .warn { padding: 12px; color: var(--error-color, #db4437); }
   .url-badge[hidden] { display: none; }
@@ -454,27 +467,54 @@ class OpenInfraStatusCard extends HTMLElement {
     if (!count || count < 1) return "";
 
     const t = this._t;
-    const heading = count === 1 ? t.general_one : t.general_many.replace("{n}", count);
     const attrs = infoState.attributes || {};
     const emoji = { maintenance: "🔧", warning: "⚠️", success: "✅" };
 
-    const items = [];
+    // OpenInfra posts each update as a new item with the same title instead of
+    // editing the old one. Collapse those into one line showing the newest
+    // item, with a "+n updates" hint for the older ones.
+    const groups = new Map();
     for (let i = 0; i < count; i++) {
       const title = attrs[`item_${i}_title`];
       if (isEmpty(title)) continue;
-      const typ = attrs[`item_${i}_type`];
-      const icon = emoji[typ] || "ℹ️";
-      let line = `${icon} ${this._escape(title)}`;
-      const start = parseApiDate(attrs[`item_${i}_start_time`]);
-      const end = parseApiDate(attrs[`item_${i}_end_time`]);
-      if (start) {
-        line += ` · ${this._fmtDateTime(start)}`;
-        if (end) line += ` → ${this._fmtDateTime(end)}`;
-      } else if (end) {
-        line += ` · ${this._fmtDateTime(end)}`;
+      const item = {
+        title,
+        type: attrs[`item_${i}_type`],
+        start: parseApiDate(attrs[`item_${i}_start_time`]),
+        end: parseApiDate(attrs[`item_${i}_end_time`]),
+      };
+      const key = String(title).trim().toLowerCase();
+      const group = groups.get(key);
+      if (!group) {
+        groups.set(key, { latest: item, older: 0 });
+        continue;
+      }
+      group.older += 1;
+      const a = item.start ? item.start.getTime() : -Infinity;
+      const b = group.latest.start ? group.latest.start.getTime() : -Infinity;
+      // Newer start time wins; on a tie keep the earlier position (API lists newest first).
+      if (a > b) group.latest = item;
+    }
+
+    const items = [];
+    for (const { latest, older } of groups.values()) {
+      const icon = emoji[latest.type] || "ℹ️";
+      let line = `${icon} ${this._escape(latest.title)}`;
+      if (latest.start) {
+        line += ` · ${this._fmtDateTime(latest.start)}`;
+        if (latest.end) line += ` → ${this._fmtDateTime(latest.end)}`;
+      } else if (latest.end) {
+        line += ` · ${this._fmtDateTime(latest.end)}`;
+      }
+      if (older > 0) {
+        const hint = older === 1 ? t.updates_one : t.updates_many.replace("{n}", older);
+        line += ` <span class="updates">${this._escape(hint)}</span>`;
       }
       items.push(`<div class="info-item">${line}</div>`);
     }
+    const heading = items.length === 1
+      ? t.general_one
+      : t.general_many.replace("{n}", items.length);
     if (!items.length) return "";
 
     return `
