@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import timedelta
+from datetime import datetime, timedelta
 import logging
 from pathlib import Path
 from typing import Any, TypeAlias
@@ -18,6 +18,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .const import (
     API_GENERAL_URL,
@@ -30,6 +31,7 @@ from .const import (
     CONF_POSTCODE,
     DEFAULT_SCAN_INTERVAL_MINUTES,
     DOMAIN,
+    STALE_DATA_GRACE_MINUTES,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -59,9 +61,56 @@ class OpenInfraDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             update_interval=timedelta(minutes=DEFAULT_SCAN_INTERVAL_MINUTES),
             config_entry=entry,
         )
+        self.last_success: datetime | None = None
+        self._failure_since: datetime | None = None
 
     async def _async_update_data(self) -> dict[str, Any]:
-        """Fetch data from both API endpoints."""
+        """Fetch data, tolerating short backend outages.
+
+        The OpenInfra backend is occasionally unreachable for a few minutes.
+        Instead of turning every entity "unavailable" right away (which
+        flips states and triggers automations), the last good data is kept
+        for STALE_DATA_GRACE_MINUTES. Only after that the update fails.
+        """
+        try:
+            data = await self._async_fetch_status()
+        except UpdateFailed as err:
+            return self._handle_update_failure(err)
+
+        if self._failure_since is not None:
+            _LOGGER.info(
+                "OpenInfra API for %s reachable again after %s",
+                self.postcode,
+                dt_util.utcnow() - self._failure_since,
+            )
+        self._failure_since = None
+        self.last_success = dt_util.utcnow()
+        data["general_info"] = await self._async_fetch_general_info()
+        return data
+
+    def _handle_update_failure(self, err: UpdateFailed) -> dict[str, Any]:
+        """Keep the last good data during the grace period, else re-raise."""
+        now = dt_util.utcnow()
+        if self._failure_since is None:
+            self._failure_since = now
+
+        grace = timedelta(minutes=STALE_DATA_GRACE_MINUTES)
+        if (
+            self.data is not None
+            and self.last_success is not None
+            and now - self.last_success < grace
+        ):
+            _LOGGER.warning(
+                "%s - keeping last known data from %s (grace period %s min)",
+                err,
+                self.last_success.isoformat(),
+                STALE_DATA_GRACE_MINUTES,
+            )
+            return self.data
+        raise err
+
+    async def _async_fetch_status(self) -> dict[str, Any]:
+        """Fetch the postcode-specific status."""
         try:
             async with asyncio.timeout(API_TIMEOUT):
                 resp = await self.session.get(
@@ -71,19 +120,25 @@ class OpenInfraDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         "postcode": self.postcode,
                     },
                 )
+                resp.raise_for_status()
                 data = await resp.json()
-        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
-            raise UpdateFailed(f"Error communicating with API: {err}") from err
-
-        if not data.get("success"):
+        except (aiohttp.ClientError, TimeoutError, ValueError) as err:
+            # TimeoutError has an empty message, so include the type name.
             raise UpdateFailed(
-                f"API returned error: {data.get('error', 'unknown error')}"
-            )
+                f"Error communicating with API: {type(err).__name__} {err}".strip()
+            ) from err
+
+        if not isinstance(data, dict):
+            raise UpdateFailed("API returned an invalid response")
+        if not data.get("success"):
+            error = data.get("error_message") or data.get("error") or "unknown error"
+            raise UpdateFailed(f"API returned error: {error}")
 
         _LOGGER.debug("OpenInfra API response: %s", data)
+        return data
 
-        # Fetch general info (non-postcode-specific maintenance/outage info).
-        # This is a secondary call; failures here should not block the main data.
+    async def _async_fetch_general_info(self) -> list[Any]:
+        """Fetch general (non-postcode) info; keep previous items on failure."""
         try:
             async with asyncio.timeout(API_TIMEOUT):
                 # JS uses "gb" for "uk" country code
@@ -92,18 +147,20 @@ class OpenInfraDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     API_GENERAL_URL,
                     params={"country": country_param},
                 )
+                general_resp.raise_for_status()
                 general_data = await general_resp.json()
+        except (aiohttp.ClientError, TimeoutError, ValueError):
+            _LOGGER.debug("Failed to fetch general info, keeping previous items")
+            if self.data is not None:
+                return self.data.get("general_info", [])
+            return []
 
-            if general_data.get("has_info") and general_data.get("info"):
-                info = general_data["info"]
-                data["general_info"] = info if isinstance(info, list) else [info]
-            else:
-                data["general_info"] = []
-        except (aiohttp.ClientError, asyncio.TimeoutError):
-            _LOGGER.debug("Failed to fetch general info, continuing without it")
-            data["general_info"] = []
-
-        return data
+        if not isinstance(general_data, dict):
+            return []
+        if general_data.get("has_info") and general_data.get("info"):
+            info = general_data["info"]
+            return info if isinstance(info, list) else [info]
+        return []
 
 
 async def _async_register_frontend(hass: HomeAssistant) -> None:
