@@ -174,12 +174,12 @@ SENSOR_DESCRIPTIONS: tuple[OpenInfraSensorEntityDescription, ...] = (
         value_fn=lambda data, _coord: _get_general_info_count(data),
     ),
     # --- Timestamp sensors ---
-    # LOCAL: generated client-side, not from API.
+    # LOCAL: time of the last successful API fetch (not refreshed by stale data).
     OpenInfraSensorEntityDescription(
         key="last_update",
         translation_key="last_update",
         device_class=SensorDeviceClass.TIMESTAMP,
-        value_fn=lambda data, _coord: dt_util.now(),
+        value_fn=lambda _data, coord: coord.last_success,
     ),
 )
 

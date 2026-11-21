@@ -11,6 +11,10 @@ CONF_POSTCODE = "postcode"
 
 DEFAULT_SCAN_INTERVAL_MINUTES = 10
 
+# Keep the last known data this long when the backend is unreachable,
+# before entities become "unavailable". Observed outages: 10-70 minutes.
+STALE_DATA_GRACE_MINUTES = 120
+
 # Frontend card (auto-registered as a Lovelace resource by the integration).
 CARD_FILENAME = "openinfra-status-card.js"
 CARD_URL_PATH = "/openinfra_status_frontend/openinfra-status-card.js"
