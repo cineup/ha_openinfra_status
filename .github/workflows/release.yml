@@ -1,7 +1,10 @@
 name: Release
 
+# Releases normally come from the Bump Version workflow. This one covers a
+# version set by hand in manifest.json, and can be started manually.
 on:
   push:
+  workflow_dispatch:
 
 jobs:
   release:

@@ -97,3 +97,21 @@ jobs:
           git add custom_components/openinfra_status/manifest.json
           git commit -m "chore: bump version to $NEW_VERSION"
           git push
+
+      # Pushes made with GITHUB_TOKEN do not start other workflows, so the
+      # Release workflow never sees the bump commit. Tag and release here.
+      - name: Create tag and release
+        if: steps.check.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="v${{ steps.new_version.outputs.version }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null; then
+            echo "Tag $VERSION already exists, skipping release"
+            exit 0
+          fi
+          git tag "$VERSION"
+          git push origin "$VERSION"
+          gh release create "$VERSION" \
+            --title "$VERSION" \
+            --generate-notes
